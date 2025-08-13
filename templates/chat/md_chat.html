@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .user-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .user-list li {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .user-list li:hover {
+            background-color: #f1f1f1; /* Light grey background on hover */
+        }
+        .user-list img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-list a {
+            text-decoration: none;
+            color: #007bff;
+            flex-grow: 1;
+        }
+        .user-list a:hover {
+            color: #0056b3;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1 class="text-center">Chat</h1>
+        <h3>Select a user to chat with:</h3>
+
+        <!-- Search input -->
+        <input type="text" id="searchInput" placeholder="Search by username..." onkeyup="filterUsers()">
+        <div id="noResults" style="display: none;">No users found.</div>
+
+        <ul class="user-list" id="userList">
+            <li>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createGroupModal">
+                    Create Group
+                </button>
+                <a href="{% url 'broadcast_chat_room' %}">Send message to all..!</a>
+                <a href="{% url 'group_chat_room' %}">Chat in Group
+                    {% if unread_count > 0 %}
+                    <span class="badge badge-danger">{{ unread_count }}</span>
+                    {% endif %}
+                </a>  
+                {% if last_group_message %} 
+                <small>{{ last_group_message }}</small>
+                {% else %}
+                No Message in the group yet
+                {% endif %}             
+            </li>
+            <h3>Groups</h3>
+            <ul class="user-list">
+                {% for group in groups %}
+                    <li>
+                        <a href="{% url 'custom_group_chat_room' group.id %}">{{ group.name }}
+                            {% if group.unread_group_count > 0 %}
+                                <span class="badge badge-danger">{{ group.unread_group_count }}</span>
+                            {% endif %}                       
+                        </a>                                                                       
+                        <span class="last-message">
+                            {% if group.last_message %}
+                                <small>{{ group.last_message }}</small>
+                            {% else %}
+                                <small>No messages yet.</small>
+                            {% endif %}
+                        </span>
+                    </li>
+                {% empty %}
+                    <li>No groups found.</li>
+                {% endfor %}
+            </ul>           
+            {% for admin in admins %}
+            <li class="user-item">
+                <img src="{{ admin.admin_image.url }}" alt="{{ admin.username }}'s profile picture">
+                <a href="{% url 'chat_room' admin.username %}">
+                    {{ admin.username }}
+                    {% if admin.unread_count > 0 %}
+                        <span class="badge badge-danger">{{ admin.unread_count }}</span>
+                    {% endif %}
+                </a>
+                <span class="last-message">
+                    {% if admin.last_message %}
+                    <small>{{ admin.last_message }}</small>                    
+                        {% if admin.last_message_sent_by_current_user %}
+                        <!-- Ticks based on message status -->
+                        {% if admin.last_message_is_read %}
+                            <!-- Message read, show double blue tick -->
+                            <i class="fas fa-check-double text-primary"></i> <!-- Blue tick for read -->
+                        {% elif admin.last_message_delivered %}
+                            <!-- Message delivered but not read, show double grey tick -->
+                            <i class="fas fa-check-double text-secondary"></i> <!-- Grey double tick -->
+                        {% else %}
+                            <!-- Message sent but not delivered, show single tick -->
+                            <i class="fas fa-check"></i> <!-- Single tick for sent -->
+                        {% endif %}
+                        {% endif %}
+                    {% else %}
+                        No messages yet.
+                    {% endif %}
+                </span>
+            </li>
+        {% endfor %}
+
+        {% for md in mds %}
+            <li class="user-item">
+                <img src="{{ md.md_image.url }}" alt="{{ md.username }}'s profile picture">
+                <a href="{% url 'chat_room' md.username %}">
+                    {{ md.username }}
+                    {% if md.unread_count > 0 %}
+                        <span class="badge badge-danger">{{ md.unread_count }}</span>
+                    {% endif %}
+                </a>
+                <span class="last-message">
+                    {% if md.last_message %}
+                    <small>{{ md.last_message }}</small>                    
+                        {% if md.last_message_sent_by_current_user %}
+                        <!-- Ticks based on message status -->
+                        {% if md.last_message_is_read %}
+                            <!-- Message read, show double blue tick -->
+                            <i class="fas fa-check-double text-primary"></i> <!-- Blue tick for read -->
+                        {% elif md.last_message_delivered %}
+                            <!-- Message delivered but not read, show double grey tick -->
+                            <i class="fas fa-check-double text-secondary"></i> <!-- Grey double tick -->
+                        {% else %}
+                            <!-- Message sent but not delivered, show single tick -->
+                            <i class="fas fa-check"></i> <!-- Single tick for sent -->
+                        {% endif %}
+                        {% endif %}
+                    {% else %}
+                        No messages yet.
+                    {% endif %}
+                </span>
+            </li>
+        {% endfor %}
+
+            {% for employee in employees %}
+            <li class="user-item">
+                <img src="{{ employee.employee_image.url }}" alt="{{ employee.username }}'s profile picture">
+                <a href="{% url 'chat_room' employee.employee_id %}">
+                    {{ employee.username }}
+                    {% if employee.unread_count > 0 %}
+                        <span class="badge badge-danger">{{ employee.unread_count }}</span>
+                    {% endif %}
+                </a>
+                <span class="last-message">
+                    {% if employee.last_message %}
+                        <small>{{ employee.last_message }}</small>
+                        {% if employee.last_message_sent_by_current_user %}
+                        <!-- Ticks based on message status -->
+                        {% if employee.last_message_is_read %}
+                            <!-- Message read, show double blue tick -->
+                            <i class="fas fa-check-double text-primary"></i> <!-- Blue tick for read -->
+                        {% elif employee.last_message_delivered %}
+                            <!-- Message delivered but not read, show double grey tick -->
+                            <i class="fas fa-check-double text-secondary"></i> <!-- Grey double tick -->
+                        {% else %}
+                            <!-- Message sent but not delivered, show single tick -->
+                            <i class="fas fa-check"></i> <!-- Single tick for sent -->
+                        {% endif %}
+                        {% endif %}
+                    {% else %}
+                        No messages yet.
+                    {% endif %}
+                </span>
+            </li>
+        {% endfor %}
+        {% for manager in managers %}
+        <li class="user-item">
+            <img src="{{ manager.manager_image.url }}" alt="{{ manager.username }}'s profile picture">
+            <a href="{% url 'chat_room' manager.manager_id %}">
+                {{ manager.username }}
+                {% if manager.unread_count > 0 %}
+                    <span class="badge badge-danger">{{ manager.unread_count }}</span>
+                {% endif %}
+            </a>
+            <span class="last-message">
+                {% if manager.last_message %}
+                    <small>{{ manager.last_message }}</small>
+                    {% if manager.last_message_sent_by_current_user %}
+                    <!-- Ticks based on message status -->
+                    {% if manager.last_message_is_read %}
+                        <!-- Message read, show double blue tick -->
+                        <i class="fas fa-check-double text-primary"></i> <!-- Blue tick for read -->
+                    {% elif manager.last_message_delivered %}
+                        <!-- Message delivered but not read, show double grey tick -->
+                        <i class="fas fa-check-double text-secondary"></i> <!-- Grey double tick -->
+                    {% else %}
+                        <!-- Message sent but not delivered, show single tick -->
+                        <i class="fas fa-check"></i> <!-- Single tick for sent -->
+                    {% endif %}
+                    {% endif %}
+                {% else %}
+                    No messages yet.
+                {% endif %}
+            </span>
+        </li>
+    {% endfor %}
+        </ul>        
+    </div>
+    <!-- Modal for Creating Group -->
+    <div class="modal fade" id="createGroupModal" tabindex="-1" role="dialog" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="createGroupModalLabel">Create Group</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="createGroupForm" method="POST" action="{% url 'create_group' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                  <label for="group_name">Group Name</label>
+                  <input type="text" class="form-control" id="group_name" name="group_name" required>
+                </div>
+      
+                <div class="form-group">
+                  <label for="group_members">Select Members</label>
+                  <select multiple class="form-control" id="group_members" name="group_members">
+                    <!-- Loop through employees -->
+                    <optgroup label="Employees">
+                      {% for employee in employees %}
+                        <option value="{{ employee.employee_id }}">{{ employee.username }} (Employee)</option>
+                      {% endfor %}
+                    </optgroup>
+      
+                    <!-- Loop through managers -->
+                    <optgroup label="Managers">
+                      {% for manager in managers %}
+                        <option value="{{ manager.manager_id }}">{{ manager.username }} (Manager)</option>
+                      {% endfor %}
+                    </optgroup>
+      
+                    <!-- Loop through admins -->
+                    <optgroup label="Admins">
+                      {% for admin in admins %}
+                        <option value="{{ admin.username }}">{{ admin.username }} (Admin)</option>
+                      {% endfor %}
+                    </optgroup>
+
+                    <!-- Loop through mds -->
+                    <optgroup label="Mds">
+                        {% for md in mds  %}
+                          <option value="{{ md.username }}">{{ md.username }} (MD)</option>
+                        {% endfor %}
+                      </optgroup>
+                  </select>
+                </div>
+      
+                <button type="submit" class="btn btn-primary">Create Group</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- JavaScript to filter users -->
+    <script>
+                    function filterUsers() {
+                let searchValue = document.getElementById("searchInput").value.toLowerCase();
+                let userItems = document.querySelectorAll(".user-item");
+                let noResults = document.getElementById("noResults");
+                let hasResults = false;
+
+                userItems.forEach(function(item) {
+                    let username = item.textContent.toLowerCase();
+                    if (username.includes(searchValue)) {
+                        item.style.display = ""; // Show the item
+                        hasResults = true;
+                    } else {
+                        item.style.display = "none"; // Hide the item
+                    }
+                });
+
+                noResults.style.display = hasResults ? "none" : "block"; // Show message if no results
+            }
+
+                $(document).ready(function() {
+            $('#groupMembers').select2({
+                placeholder: "Select members",
+                allowClear: true
+            });
+        });
+    </script>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+</body>
+</html>

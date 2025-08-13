@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Manager</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Update Manager</h2>
+        
+        <!-- Display success or error messages -->
+        {% if messages %}
+            <div>
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'md_update_manager' manager.id %}"  enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="managerId">Manager ID</label>
+                <input type="text" class="form-control" id="managerId" name="manager_id" value="{{ manager.manager_id }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="managerName">Manager Name</label>
+                <input type="text" class="form-control" id="managerName" name="manager_name" value="{{ manager.manager_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="managerDepartment">Department</label>
+                <select class="form-control" id="managerDepartment" name="manager_department" required>
+                    {% for department in departments %}
+                        <option value="{{ department.department_id }}" {% if department.id == manager.department.id %}selected{% endif %}>{{ department.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+
+            <div class="form-group">
+                <label for="managerLocation">Location</label>
+                <select class="form-control" id="managerLocation" name="manager_location" required>
+                    {% for location in locations %}
+                        <option value="{{ location.id }}" {% if location.id == manager.location.id %}selected{% endif %}>{{ location.location_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+
+            <div class="form-group">
+                <label for="managerShift">Shift</label>
+                <select class="form-control" id="managerShift" name="manager_shift" required>
+                    {% for shift in shifts %}
+                        <option value="{{ shift.shift_number }}" {% if manager.shift.shift_number == shift.shift_number %}selected{% endif %}>
+                            {{ shift.shift_number }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="managerEmail">Email</label>
+                <input type="email" class="form-control" id="managerEmail" name="manager_email" value="{{ manager.email }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="managerGender">Gender</label>
+                <select class="form-control" id="managerGender" name="manager_gender" required>
+                    <option value="Male" {% if manager.gender == "Male" %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if manager.gender == "Female" %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if manager.gender == "Other" %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="managerImage">Manager Image</label><br>
+                <img src="{{ manager.manager_image.url }}" alt="{{ manager.manager_name }}" width="100" class="img-thumbnail mb-2">
+                <input type="file" class="form-control" id="managerImage" name="manager_image">
+            </div>
+
+            <div class="form-group">
+                <label for="managerDOB">Date of Birth</label>
+                <input type="date" class="form-control" id="managerDOB" name="manager_dob" value="{{ manager.dob|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="managerHD">Hired Date</label>
+                <input type="date" class="form-control" id="managerHD" name="manager_hd" value="{{ manager.hired_date|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="managerUsername">Username</label>
+                <input type="text" class="form-control" id="managerUsername" name="manager_username" value="{{ manager.username }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Manager</button>
+            <a href="{% url 'md_home' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

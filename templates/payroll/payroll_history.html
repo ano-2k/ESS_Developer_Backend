@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select, input[type="month"], button {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .no-data {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        function validateForm() {
+            const user = document.getElementById('user').value;
+            const month = document.getElementById('month').value;
+
+            if (!user && !month) {
+                alert("Please select at least one filter (User or Month).");
+                return false;
+            }
+            return true;
+        
+    
+    </script>
+</head>
+<body>
+    
+
+    <div class="container">
+        <h1>Payroll History</h1>
+
+        <form method="GET" action="{% url 'payroll_history' %}" onsubmit="return validateForm();">
+            <div>
+                <label for="user">User:</label>
+                <select name="user" id="user">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                        <option value="{{ user.user }}" {% if request.GET.user == user.user %}selected{% endif %}>
+                            {{ user.user }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="month">Month:</label>
+                <input type="month" name="month" id="month" value="{{ request.GET.month }}">
+            </div>
+            <button type="submit">Filter</button>
+        </form>
+
+        {% if payrolls %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Month</th>
+                        <th>Base Salary</th>
+                        <th>Total Working Hours</th>
+                        <th>Net Salary</th>
+                        <th>Payslip</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payroll in payrolls %}
+                        <tr>
+                            <td>{{ payroll.user }}</td>
+                            <td>{{ payroll.month|date:"F Y" }}</td>
+                            <td>{{ payroll.base_salary }}</td>
+                            <td>{{ payroll.total_working_hours }}</td>
+                            <td>{{ payroll.net_salary }}</td>
+                            <td>
+                                <a href="{% url 'download_pdf' payroll.pdf_path %}" download>Download</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">No payroll records found.</div>
+        {% endif %}
+    </div>
+    <div>
+        <a href="{% url 'payroll_manage' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</body>
+</html>

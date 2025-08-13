@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Edit Team</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    <!-- Team Name -->
+    <div class="form-group">
+        <label for="team_name">Team Name</label>
+        <input type="text" id="team_name" name="team_name" class="form-control" value="{{ team.team_name }}" required>
+    </div>
+
+    <!-- Project -->
+    <div class="form-group">
+        <label for="project">Project</label>
+        <select id="project" name="project" class="form-control" required>
+            <option value="">Select Project</option>
+            {% for project in projects %}
+                <option value="{{ project.name }}" {% if project == team.project %}selected{% endif %}>{{ project.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Team Task -->
+    <div class="form-group">
+        <label for="team_task">Team Task</label>
+        <input type="text" id="team_task" name="team_task" class="form-control" value="{{ team.team_task }}" required>
+    </div>
+
+    <!-- Manager -->
+    <div class="form-group">
+        <label for="manager">Manager</label>
+        <select id="manager" name="manager" class="form-control" required>
+            <option value="">Select Manager</option>
+            {% for manager in managers %}
+                <option value="{{ manager.manager_name }}" {% if manager == team.manager_name %}selected{% endif %}>{{ manager.manager_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Team Leader -->
+    <div class="form-group">
+        <label for="team_leader">Team Leader</label>
+        <select id="team_leader" name="team_leader" class="form-control" required>
+            <option value="">Select Team Leader</option>
+            {% for employee in employees %}
+                <option value="{{ employee.employee_name }}" {% if employee == team.team_leader_employee_name %}selected{% endif %}>{{ employee.employee_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Team Members -->
+    <div class="form-group">
+        <label for="members">Team Members</label>
+        <select id="members" name="members" class="form-control" multiple required>
+            {% for employee in employees %}
+                <option value="{{ employee.employee_name }}" {% if employee in selected_members %}selected{% endif %}>{{ employee.employee_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="team_id">Team id</label>
+        <input type="text" id="team_id" name="team_id" class="form-control" value="{{ team.team_id }}" required>
+    </div>
+
+
+
+    <!-- Submit Button -->
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Update Team</button>
+    </div>
+
+</form>
+</body>
+</html>

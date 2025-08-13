@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Reset Checkout Requests</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Pending Manager Reset Checkout Requests</h2>
+
+        {% if reset_requests %}
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Manager ID</th>
+                        <th>Username</th>
+                        <th>Request Type</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Shift</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>In Status</th>
+                        <th>Out Status</th>
+                        <th>Notes</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in reset_requests %}
+                        <tr>
+                            <td>{{ request.manager_id }}</td>
+                            <td>{{ request.username }}</td>
+                            <td>{{ request.request_type }}</td>
+                            <td>{{ request.request_description }}</td>
+                            <td>{{ request.date }}</td>
+                            <td>{{ request.shift }}</td>
+                            <td>{{ request.time_in }}</td>
+                            <td>{{ request.time_out }}</td>
+                            <td>{{ request.in_status }}</td>
+                            <td>{{ request.out_status }}</td>
+                            <td>{{ request.notes }}</td>
+                            <td>{{ request.status }}</td>
+                            <td>
+                                <a href="{% url 'admin_approve_manager_reset_request' request.id %}" class="btn btn-success">Approve</a>
+                                <a href="{% url 'admin_reject_manager_reset_request' request.id %}" class="btn btn-danger">Reject</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No pending requests at the moment.</p>
+        {% endif %}
+
+        <a href="{% url 'custom_admin_home' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+    </div>
+</body>
+</html>

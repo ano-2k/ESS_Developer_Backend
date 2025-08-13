@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+        }
+        .badge {
+            margin-left: 5px;
+        }
+        .btn-primary, .btn-info {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <h1 class="text-center">Employee Dashboard</h1>
+    </div>
+    
+    <!-- My Tasks Button -->
+    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#emptaskSection" aria-expanded="false" aria-controls="emptaskSection">
+        My Tasks
+    </button>
+
+    <!-- My Tasks Section -->
+    <div class="collapse mt-3" id="emptaskSection">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Tasks</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'view_my_emptask' %}" class="btn btn-info mb-3">
+                    View My Tasks
+                </a>
+
+                <!-- Task List -->
+                <div class="mt-2">
+                    {% if emptask %}
+                    <ul class="list-group">
+                        {% for task in emptask %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>Team Name:</strong> {{ task.team_name }} <br>
+                                    <strong>Project Name:</strong> {{ task.team_project_name }} <br>
+                                    <strong>Assigned To:</strong> {{ task.assigned_to }} <br>
+                                    <strong>Task Name:</strong> {{ task.task_name }} <br>
+                                    <strong>Description:</strong> {{ task.task_description }} <br>
+                                    <strong>Deadline:</strong> {{ task.deadline }} <br>
+                                    <strong>Status:</strong> 
+                                    {% if task.emp_taskstatus == 'completed' %}
+                                        <span class="badge badge-success">Completed</span>
+                                    {% elif task.emp_taskstatus == 'in_progress' %}
+                                        <span class="badge badge-warning">In Progress</span>
+                                    {% elif task.emp_taskstatus == 'overdue' %}
+                                        <span class="badge badge-danger">Overdue</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Not Started</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm btn-info" type="button" data-toggle="collapse" data-target="#uploadForm{{ task.id }}" aria-expanded="false" aria-controls="uploadForm{{ task.id }}">
+                                        Upload Task Document
+                                    </button>
+                                    <a href="{% url 'update_emptask_status' task.task_name %}" class="btn btn-sm btn-primary">Update Status</a>
+                                </div>
+                            </div>
+                            
+                            <!-- Collapsible upload form -->
+                            <div class="collapse mt-2" id="uploadForm{{ task.id }}">
+                                <form method="POST" action="{% url 'upload_document_emp' task.id %}" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="document_{{ task.id }}">Select Document</label>
+                                        <input type="file" class="form-control" id="document_{{ task.id }}" name="document" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                </form>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No tasks found.</p>
+                    {% endif %}
+                </div>
+                <!-- End of Task List -->
+            </div>
+        </div>
+        <!-- End of My Tasks Card -->
+    </div>
+</div>
+
+<!-- Include jQuery and Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

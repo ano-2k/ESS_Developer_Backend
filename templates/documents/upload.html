@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload Document</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input[type="email"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            font-size: 0.9em;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+    </style>
+    <script>
+        function validateForm() {
+            const email = document.forms["uploadForm"]["email"].value;
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            let isValid = true;
+
+            // Simple email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email)) {
+                alert("Please enter a valid email address.");
+                isValid = false;
+            }
+
+            // Check for required file uploads
+            fileInputs.forEach((input) => {
+                if (!input.files.length) {
+                    alert(`Please upload a file for ${input.previousElementSibling.innerText}`);
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+    </script>
+</head>
+<body>
+    <h1>Upload Document</h1>
+    <form name="uploadForm" method="POST" enctype="multipart/form-data" onsubmit="return validateForm();">
+        {% csrf_token %}
+        <div>
+            <label for="employee_id">Employee ID:</label>
+            <select class="form-control" id="employee_id" name="employee_id" required>
+                <option value="">Select Employee</option>
+                {% for employee in employees %}
+                    <option value="{{ employee.employee_id }}">{{ employee.employee_id }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label for="email">Employee Email:</label>
+            <select class="form-control" id="email" name="email" required>
+                <option value="">Select Employee</option>
+                {% for employee in employees %}
+                    <option value="{{ employee.email }}">{{ employee.email }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <label for="aadhar_card">Aadhar Card:</label>
+        <input type="file" name="aadhar_card" accept="application/pdf,image/*" required>
+
+        <label for="pan_card">PAN Card:</label>
+        <input type="file" name="pan_card" accept="application/pdf,image/*" required>
+
+        <label for="bank_details">Bank Details:</label>
+        <input type="file" name="bank_details" accept="application/pdf,image/*" required>
+
+        <label for="previous_payslip">Previous Payslip:</label>
+        <input type="file" name="previous_payslip" accept="application/pdf,image/*" required>
+
+        <label for="experience_certificate">Experience Certificate:</label>
+        <input type="file" name="experience_certificate" accept="application/pdf,image/*" required>
+
+        <label for="degree_certificate">Degree Certificate:</label>
+        <input type="file" name="degree_certificate" accept="application/pdf,image/*" required>
+
+        <label for="description">Description:</label>
+        <textarea name="description"></textarea>
+
+        <button type="submit">Upload</button>
+    </form>
+    <a class="button" href="{% url 'document_list' %}">View Documents</a>
+    <div>
+        {% if request.session.role == 'admin' %}
+           <a href="{% url 'custom_admin_home'  %}" class="btn btn-secondary">Back to Dashboard</a>
+        {% elif request.session.role == 'md' %}
+           <a href="{% url 'md_home'  %}" class="btn btn-secondary">Back to Dashboard</a>  
+        {% endif %}   
+    </div>
+</body>
+</html>

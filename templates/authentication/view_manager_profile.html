@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Profile Details</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+        .profile-image {
+            display: block;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            border: 2px solid #007bff;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .btn-info {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .linkedin-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .linkedin-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h2>Profile Details</h2>
+
+    <p><strong>ID:</strong> {{ manager.manager_id }}</p>
+    <p><strong>Name:</strong> {{ manager.manager_name }}</p>
+    <p><strong>Username:</strong> {{ manager.username }}</p>
+    <p><strong>Email:</strong> {{ manager.email }}</p>
+    <p><strong>Image:</strong> <img src="{{ manager.manager_image.url }}" alt="Manager Image" class="profile-image" width="100"></p>
+    <p><strong>Gender:</strong> {{ manager.gender }}</p>
+    <p><strong>Date of Birth:</strong> {{ manager.dob }}</p>
+    <p><strong>Hired Date:</strong> {{ manager.hired_date }}</p>
+    <p><strong>Department:</strong> {{ manager.department.department_name }}</p>
+    <p><strong>Shift:</strong> {{ manager.shift.shift_number }}</p>
+    <p><strong>Address:</strong> {{ manager.address }}</p>
+    <p><strong>City:</strong> {{ manager.city }}</p>
+    <p><strong>Country:</strong> {{ manager.country }}</p>
+    <p><strong>State:</strong> {{ manager.state }}</p>
+    <p><strong>Phone:</strong> {{ manager.phone_number }}</p>
+    <p><strong>Pincode:</strong> {{ manager.pincode }}</p>
+    <p><strong>LinkedIn Profile:</strong> <a href="{{ manager.linkedin_profile_link }}" class="linkedin-link">{{ manager.linkedin_profile_link }}</a></p>
+
+    <a href="{% url 'update_manager_profile' manager.id %}" class="btn btn-info">Update Profile</a>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Monthly Attendance Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            width: 100%;  /* Make it take full width on smaller screens */
+            max-width: 60%;  /* Set a max width for larger screens */
+            margin: 0 auto;  /* Center the chart */
+        }
+        canvas {
+            max-width: 100%;  /* Ensure it scales within the container */
+            height: 300px;    /* Adjust the height */
+        }
+        .navigation-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .totals {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Monthly Attendance Chart for Employee ID: {{ employee_id }} for {{ month }}</h2>
+        <div class="chart-container">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+
+        <div class="navigation-buttons">
+            <!-- Navigation buttons for month offset -->
+            <form method="GET" style="display: inline;">
+                <input type="hidden" name="employee_id" value="{{ employee_id }}">
+                <input type="hidden" name="month_offset" value="{{ month_offset|add:-1 }}">
+                <button type="submit">Previous Month</button>
+            </form>
+            <form method="GET" style="display: inline;">
+                <input type="hidden" name="employee_id" value="{{ employee_id }}">
+                <input type="hidden" name="month_offset" value="{{ month_offset|add:1 }}">
+                <button type="submit">Next Month</button>
+            </form>
+            <!-- Adjust URL as needed -->
+            <a href="{% url 'employee_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+
+        <!-- Display total working hours, overtime, and average hours worked per week -->
+        <div class="totals">
+            <p>Total Working Hours: {{ total_hours }} hrs</p>
+            <p>Total Overtime: {{ total_overtime }} hrs</p>
+            <p>Overall Average Hours Worked Per Week: {{ average_hours_per_week }} hrs</p> <!-- Overall Average -->
+            <h3>Weekly Average Hours:</h3>
+            <ul>
+                <li>Week 1 Average: {{ weekly_averages.0 }} hrs</li>
+                <li>Week 2 Average: {{ weekly_averages.1 }} hrs</li>
+                <li>Week 3 Average: {{ weekly_averages.2 }} hrs</li>
+                <li>Week 4 Average: {{ weekly_averages.3 }} hrs</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        var ctx = document.getElementById('attendanceChart').getContext('2d');
+        var attendanceChart = new Chart(ctx, {
+            type: 'bar',  // Bar chart type
+            data: {
+                labels: {{ labels|safe }},  // Labels for the chart (e.g., days of the month)
+                datasets: [
+                    {
+                        label: 'Total Working Hours',
+                        data: {{ data|safe }},  // Working hours data
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Hours'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

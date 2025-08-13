@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin: 10px 0;
+        }
+        .message.sent {
+            align-items: flex-start;
+        }
+        .message.received {
+            align-items: flex-end;
+        }
+        .message.sent p {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message.received p {
+            background-color: #e9ecef;
+            color: black;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message small {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .message:hover {
+            background-color: #f1f1f1; /* Change background on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <h1 class="text-center">Chat with {{ user_name }}</h1>
+        <div class="messages">
+            <!-- Chat messages will go here -->
+            {% for message in messages %}
+            <div class="message {% if message.sender_username == user_name %}sent{% else %}received{% endif %}">                    
+                <p><strong>{{ message.sender_username }}:</strong> {{ message.content }}</p>
+                <small>{{ message.timestamp }}</small>
+                
+                <!-- Show ticks only for sent messages -->
+                {% if message.receiver_username == user_name %}
+                    {% if message.is_read %}
+                        <!-- Message read, show double blue tick -->
+                        <i class="fas fa-check-double text-primary"></i> <!-- Blue tick for read -->
+                    {% elif message.is_delivered %}
+                        <!-- Message delivered but not read, show double grey tick -->
+                        <i class="fas fa-check-double text-secondary"></i> <!-- Grey double tick -->
+                    {% else %}
+                        <!-- Message sent but not delivered, show single tick -->
+                        <i class="fas fa-check"></i> <!-- Single tick for sent -->
+                    {% endif %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <form method="POST" action="{% url 'send_message' user_id=user_id %}">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" class="form-control" name="message" placeholder="Type your message here..." required>
+                <input type="hidden" name="timezone" id="timezone"> 
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Send</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('timezone').value = timezone;
+        });
+
+        // Scroll to the bottom of the messages
+        var messagesDiv = document.querySelector('.messages');
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    </script>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

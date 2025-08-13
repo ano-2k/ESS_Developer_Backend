@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Feedback Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #343a40;
+        }
+        table {
+            margin: 20px auto;
+            width: 90%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .no-feedback {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Admin Feedback Dashboard</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Manager</th>
+            <th>Employee</th>
+            <th>Date</th>
+            <th>Comments</th>
+            <th>Reviewed</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if feedbacks %}
+            {% for feedback in feedbacks %}
+                <tr>
+                    <td>
+                        {% if feedback.manager %}
+                            {{ feedback.manager.manager_name }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    
+                    <td>
+                        {% if feedback.employee %}
+                            {{ feedback.employee.employee_name }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    
+                    <td>{{ feedback.feedback_date }}</td>
+                    <td>{{ feedback.comments }}</td>
+                    <td>{{ feedback.is_reviewed }}</td>
+                    <td>
+                        {% if feedback.is_reviewed == 'No' %}
+                            <a href="{% url 'update_feedback_status' feedback.id %}" class="btn btn-primary">Mark as Reviewed</a>
+                        {% else %}
+                            Reviewed
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td colspan="6" class="no-feedback">No feedbacks available</td></tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

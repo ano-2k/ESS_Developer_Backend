@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Invoice PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .invoice {
+            width: 100%;
+            margin: auto;
+            border: 1px solid #000;
+            padding: 20px;
+        }
+        .invoice-header, .invoice-body, .invoice-footer {
+            margin-bottom: 20px;
+        }
+        .invoice-header h2 {
+            margin: 0;
+        }
+        .invoice-header p {
+            margin: 5px 0;
+        }
+        .invoice-body table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .invoice-body th, .invoice-body td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        .invoice-footer p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice">
+        <div class="invoice-header">
+            <h2>{{ business_name }}</h2>
+            <p>Invoice No.: {{ invoice_number }}</p>
+            <p>Invoice Date: {{ invoice_date }}</p>
+        </div>
+
+        <div class="invoice-body">
+            <h3>BILL TO</h3>
+            <p>{{ party_name }}</p>
+            <p>Shipping Address: {{ shipping_address }}</p>
+
+            <h3>Items:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ITEMS</th>
+                        <th>QTY.</th>
+                        <th>RATE</th>
+                        <th>TAX</th>
+                        <th>AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.item_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.price_per_item }}</td>
+                        <td>{{ item.tax }}%</td>
+                        <td>₹{{ item.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <p><strong>Total Amount:</strong> ₹{{ final_total }}</p>
+        </div>
+    </div>
+</body>
+</html>

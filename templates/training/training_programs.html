@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Training Programs</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .table {
+            margin-top: 20px;
+        }
+        .btn-action {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Training Programs</h2>
+    <table class="table table-bordered table-hover">
+        <thead class="thead-light">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Training Incharge</th>
+                <th>To Managers</th>
+                <th>To Employees</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for program in programs %}
+            <tr>
+                <td>{{ program.program_id }}</td>
+                <td>{{ program.name }}</td>
+                <td>{{ program.start_date }}</td>
+                <td>{{ program.end_date }}</td>
+                <td>{{ program.training_incharge }}</td>
+                <td>{{ program.for_managers }}</td>
+                <td>{{ program.for_employees }}</td>
+                <td>
+                    <a href="{% url 'edit_program' program.program_id %}" class="btn btn-warning btn-action">Edit</a>
+                    <a href="{% url 'delete_program' program.program_id %}" class="btn btn-danger btn-action">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">No programs found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

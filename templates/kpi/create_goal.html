@@ -1,0 +1,18 @@
+<h1>Create Goals For Employees</h1>
+<form method="post">
+    {% csrf_token %}
+    <label for="employee_id">Employee:</label>
+    <select name="employee_id" id="employee_id">
+        {% for employee in employees %}
+            <option value="{{ employee.employee_id }}">{{ employee.employee_name }}</option>
+        {% endfor %}
+    </select><br><br>
+    <label for="goal_text">Goal:</label>
+    <input type="text" name="goal_text" required><br><br>
+    <label for="start_date">Start Date:</label>
+    <input type="date" name="start_date" required><br><br>
+    <label for="end_date">End Date:</label>
+    <input type="date" name="end_date" required><br><br>
+    <button type="submit">Submit Goal</button><br><br>
+    <a href="{% url 'goal_review_list' %}">view_goals_settings</a>
+</form>

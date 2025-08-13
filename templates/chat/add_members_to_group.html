@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Members</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-size: 1.1em;
+            color: #555;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            font-size: 1em;
+        }
+        select[multiple] {
+            height: 120px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form method="POST" action="{% url 'add_members_to_group' group.id %}">
+            {% csrf_token %}
+            
+            <h3>Select Members to Add to the Group</h3>
+        
+            <label for="employees">Employees:</label>
+            <select name="members" id="employees" multiple>
+                {% for employee in employees %}
+                    <option value="{{ employee.employee_id }}">{{ employee.username }} (Employee)</option>
+                {% endfor %}
+            </select>
+        
+            <label for="managers">Managers:</label>
+            <select name="members" id="managers" multiple>
+                {% for manager in managers %}
+                    <option value="{{ manager.manager_id }}">{{ manager.username }} (Manager)</option>
+                {% endfor %}
+            </select>
+        
+            <label for="admins">Admins:</label>
+            <select name="members" id="admins" multiple>
+                {% for admin in admins %}
+                    <option value="{{ admin.username }}">{{ admin.username }} (Admin)</option>
+                {% endfor %}
+            </select>
+
+            <label for="mds">MDs</label>
+            <select name="members" id="Mds" multiple>
+                {% for md in mds %}
+                    <option value="{{ md.username }}">{{ md.username }} (MD)</option>
+                {% endfor %}
+            </select>
+        
+            <button type="submit">Add Members</button>
+        </form> 
+    </div>   
+</body>
+</html>

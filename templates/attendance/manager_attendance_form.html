@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Attendance Form</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Attendance Form</h2>
+        
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <form method="POST" action="{% url 'submit_manager_attendance' %}">
+            {% csrf_token %}
+            {% if show_checkout %}
+                <button type="submit" name="check_out" class="btn btn-danger">Check Out</button>
+                <p>{{ thank_you_message }}</p>                
+            {% else %}
+                <!-- Display Assigned Shift -->
+                <label for="shift">Assigned Shift:</label>
+                <input type="text" name="shift" value="{{ shift.shift_number }}" readonly class="form-control">
+
+                <!-- Check-in Form -->
+                <label for="location">Location:</label>
+                <select name="location" required class="form-control">
+                    {% for location in locations %}
+                        <option value="{{ location.location_name }}">{{ location.location_name }}</option>
+                    {% endfor %}
+                </select>
+        
+                <label for="notes">Notes:</label>
+                <textarea name="notes" required class="form-control"></textarea>
+        
+                <button type="submit" name="check_in" class="btn btn-primary mt-3">Check In</button>
+                <!-- Show the reset request link -->
+                <p>If you accidentally checked out, <a href="#" data-toggle="modal" data-target="#resetRequestModal">click here to request a reset</a>.</p>
+            {% endif %}
+        </form>
+        <br>        
+        <a href="{% url 'manager_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>        
+    </div>
+
+    <!-- Modal for Reset Request -->
+        <div class="modal fade" id="resetRequestModal" tabindex="-1" aria-labelledby="resetRequestModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="resetRequestModalLabel">Request Check-Out Reset</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form method="POST" action="{% url 'manager_request_check_out_reset' %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="request_type" class="form-label">Request Type:</label>
+                                <select name="request_type" class="form-select" required>
+                                    <option value="Accidentally">Accidentally Checked Out</option>
+                                    <option value="Extend_time">Extend Work Time</option>
+                                    <option value="Not_completed_work">Not Completed Work</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="request_description" class="form-label">Describe Your Request:</label>
+                                <textarea name="request_description" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

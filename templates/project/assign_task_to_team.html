@@ -1,0 +1,87 @@
+<!-- templates/assign_task_page.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Task to Team Members</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Assign Task to Team Members</h2>
+
+        <div class="card card-body mt-2">
+            <!-- Form to Assign Tasks -->
+            <form method="POST" action="{% url 'assign_task_to_team' request.session.user %}">
+                {% csrf_token %}
+                
+                <!-- Select Team -->
+                <div class="form-group">
+                    <label for="team">Select Team:</label>
+                    <select class="form-control" id="team" name="team" required>
+                        {% for team in teams %}
+                            <option value="{{ team.team_name }}">{{ team.team_name }} </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="team">Select Mnager:</label>
+                    <select class="form-control" id="manager" name="manager" required>
+                        {% for team in teams %}
+                            <option value="{{ team.manager.manager_id }}">{{ team.manager.manager_id }} </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Select Team Project -->
+                <div class="form-group">
+                    <label for="team_project">Select Team project:</label>
+                    <select class="form-control" id="team_project" name="team_project" required>
+                        {% for team in teams %}
+                            <option value="{{ team.project.name }}">{{ team.project.name }} </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Select Team Member -->
+                <div class="form-group">
+                    <label for="member">Select Team Member:</label>
+                    <select class="form-control" id="member" name="member" required>
+                        {% for team in teams %}
+                        {% for member in team.members.all %}
+                            <option value="{{ member.employee_name }}">{{ member.employee_name }}</option>
+                        {% endfor %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Task Assignment -->
+                <div class="form-group">
+                    <label for="task_name">Task Name:</label>
+                    <input type="text" class="form-control" id="task_name" name="task_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="task_description">Task Description:</label>
+                    <textarea class="form-control" id="task_description" name="task_description" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="deadline">Deadline:</label>
+                    <input type="date" class="form-control" id="deadline" name="deadline" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="task_id">Task Id:</label>
+                    <input type="text" class="form-control" id="task_id" name="task_id" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Assign Task</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

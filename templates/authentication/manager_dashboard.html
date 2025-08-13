@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+{% comment %} <style>
+    .card {
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .modal-content {
+        border-radius: 0.5rem;
+    }
+    
+    .modal-header {
+        border-bottom: none;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+    
+    .btn-info:hover {
+        background-color: #138496;
+    }
+    
+</style> {% endcomment %}
+<body>
+    <div class="container mt-4">
+        
+        <!-- Display messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h1>Welcome to the Manager Dashboard</h1>
+        <p>You are logged in as {{ request.session.user }}</p>
+        <a href="{% url 'user_logout' %}" class="btn btn-danger">Logout</a>
+        <a href="{% url 'manager_leave' %}" class="btn btn-danger">Manager Leave</a>
+        <a href="{% url 'employee_leave_management' %}" class="btn btn-danger">Employee Leave Management</a>
+        <a href="{% url 'manager_payroll_notification' %}" class="btn btn-danger">payroll </a>
+        <a href="{% url 'manager_chat' %}" class="btn btn-danger">Chat</a>
+        
+
+        <!-- Attendance Button -->
+        <div class="mt-4">
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#attendanceSection" aria-expanded="false" aria-controls="attendanceSection">
+                Attendance
+            </button>
+            <div class="collapse" id="attendanceSection">
+                <div class="card card-body mt-2">
+                    <a href="{% url 'manager_attendance_form' %}" class="btn btn-info">Attendance Form</a>
+                    <a href="{% url 'manager_attendance_history' %}" class="btn btn-info">History</a><br>
+                    <a href="{% url 'manager_weekly_attendance_chart' %}" class="btn btn-info mt-2">Weekly Attendance Chart</a>                    
+                    <a href="{% url 'manager_monthly_attendance_chart' %}" class="btn btn-info mt-2">Monthly Attendance Chart</a>                    
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary btn-lg" type="button" data-toggle="collapse" data-target="#employeeSection" aria-expanded="false" aria-controls="employeeSection">
+                Employee
+            </button>
+            <div class="collapse" id="employeeSection">
+                <div class="card card-body mt-2 shadow">
+                    <button class="btn btn-info btn-block" data-toggle="modal" data-target="#employeeAttendanceHistoryModal">Attendance History</button>
+                    <a href="#" class="btn btn-info btn-block mt-2" data-toggle="modal" data-target="#employeeProfileModal">View Profile</a>
+                    <a href="{% url 'manager_reset_requests' %}" class="btn btn-info btn-block mt-2">Attendance Requests</a>
+                    <a href="#" class="btn btn-info btn-block mt-2" data-toggle="modal" data-target="#employeeWeeklyChartModal">Weekly Chart</a>
+                    <a href="#" class="btn btn-info btn-block mt-2" data-toggle="modal" data-target="#employeeMonthlyChartModal">Monthly Chart</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employee Attendance History Modal -->
+    <div class="modal fade" id="employeeAttendanceHistoryModal" tabindex="-1" role="dialog" aria-labelledby="employeeHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="employeeHistoryModalLabel">Employee Attendance History</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{% url 'show_employee_attendance_history' %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="employee_id">Employee ID:</label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Enter Employee ID" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="from_date">From Date:</label>
+                            <input type="date" class="form-control" id="from_date" name="from_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="to_date">To Date:</label>
+                            <input type="date" class="form-control" id="to_date" name="to_date" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Show Attendance</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+            <!-- Employee Weekly Chart Modal -->
+        <div class="modal fade" id="employeeWeeklyChartModal" tabindex="-1" role="dialog" aria-labelledby="employeeWeeklyChartModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="employeeWeeklyChartModalLabel">Employee Weekly Attendance Chart</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{% url 'show_employees_weekly_chart' %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="employee_id">Employee ID:</label>
+                                <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Enter Employee ID" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Show Chart</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Monthly Chart Modal -->
+            <div class="modal fade" id="employeeMonthlyChartModal" tabindex="-1" role="dialog" aria-labelledby="employeeMonthlyChartModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="employeeMonthlyChartModalLabel">Employee Monthly Attendance Chart</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'show_employees_monthly_chart' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="employee_id">Employee ID:</label>
+                                    <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Enter Employee ID" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Show Chart</button>
+                            </form>
+                        </div>
+                    </div>
+                </div> 
+            </div> 
+
+            <!-- Employee Profile Modal -->
+            <div class="modal fade" id="employeeProfileModal" tabindex="-1" role="dialog" aria-labelledby="employeeProfileModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="employeeProfileLabel">Employee Profile</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'manager_view_employee_profile' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="employee_id">Employee ID:</label>
+                                    <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Enter Employee ID" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Show Chart</button>
+                            </form>
+                        </div>
+                    </div>
+                </div> 
+            </div> 
+    </div>
+
+
+
+
+        
+
+
+            <div class=" container mt-4">
+                <!-- Task Management Button -->
+                <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#taskManagementSection" aria-expanded="false" aria-controls="taskManagementSection">
+                    Task Management
+                </button>
+                
+                <!-- Task Management Section -->
+                <div class="collapse" id="taskManagementSection">
+                    <div class="card card-body mt-2">
+            
+                        <!-- Show My Tasks Button -->
+                        <a href="{% url 'show_my_tasks' %}" class="btn btn-info">
+                            Show My Tasks
+                        </a>
+            
+                        <!-- My Tasks Section -->
+                        <div class="mt-2">
+                            {% if tasks %}
+                                <ul class="list-group mt-2">
+                                    {% for task in tasks %}
+                                        <li class="list-group-item">
+                                            <strong>Task Id:</strong> {{ task.task_id }}<br>
+                                            <strong>Task Name:</strong> {{ task.task_name }}<br>
+                                            <strong>Project Name:</strong> {{ task.project_name }}<br>
+                                            <strong>Description:</strong> {{ task.description }}<br>
+                                            <strong>Priority:</strong> {{ task.priority }}<br>
+                                            <strong>Start Date:</strong> {{ task.start_date }}<br>
+                                            <strong>Deadline:</strong> {{ task.deadline }}<br>
+                                            <strong>Status:</strong> {{ task.status }}<br>
+                                            
+                                            <a href="{% url 'task_check_in' task.task_id 'manager' request.session.user_id %}"class="btn btn-sm btn-primary">Check In</a>
+                                            <a href="{% url 'task_check_out' task.task_id  'manager' %}"class="btn btn-sm btn-primary">Check Out</a>
+                                            
+        
+                                    <!-- Button to show/hide the upload form -->
+                                            <button class="btn btn-sm btn-info" type="button" data-toggle="collapse" data-target="#uploadForm{{ task.task_id }}" aria-expanded="false" aria-controls="uploadForm{{ task.task_id }}">
+                                            Upload Task Document
+                                            </button>
+                                    
+                                            <!-- Collapsible upload form -->
+                                            <div class="collapse mt-2" id="uploadForm{{ task.task_id }}">
+                                                <form method="POST" action="{% url 'upload_document' task.task_id %}" enctype="multipart/form-data">
+                                                    {% csrf_token %}
+                                                    <div class="form-group">
+                                                        <label for="document_{{ task.task_id }}">Select Document</label>
+                                                        <input type="file" class="form-control" id="document_{{ task.task_id }}" name="document" required>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary">Upload</button>
+                                                </form>
+                                            </div>
+                                            <a href="{% url 'update_task_status' task.task_id %}" class="btn btn-sm btn-primary">Update Status</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No tasks assigned.</p>
+                            {% endif %}
+                        </div>
+                        <!-- End of My Tasks Section -->
+            
+                    </div>
+                </div>
+                <!-- End of Task Management Section -->
+            </div>
+        
+        
+        
+        
+        
+            <div class=" container mt-4">
+                <!-- Team members Button -->
+                <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#teammembersSection" aria-expanded="false" aria-controls="teammembersSection">
+                    Team Members
+                </button>
+                
+                <!-- Team Members Section -->
+                <div class="collapse" id="teammembersSection">
+                    <div class="card card-body mt-2">
+            
+                        <!-- Show My Teams Button -->
+                        <a href="{% url 'view_my_teams' %}" class="btn btn-info">
+                            View My Teams
+                        </a>
+            
+                        <!-- My Teams Section -->
+                        <div class="mt-2">
+                            {% if teams %}
+                                <ul class="list-group mt-2">
+                                    {% for team in teams %}
+                                        <li class="list-group-item">
+                                            <strong>Team Id:</strong> {{ team.team_id }}<br>
+                                            <strong>Team Name:</strong> {{ team.team_name }}<br>
+                                            <strong>Project Name:</strong> {{ team.project.name }}<br>
+                                            <strong>Team Task:</strong> {{ team.team_task }}<br>
+                                            <strong>Team leader Name:</strong> {{ team.team_leader.employee_name }}<br>
+                                            <strong>Team members:</strong>
+                                                {% for member in team.members.all %}
+                                                    {{ member.employee_name }}<br>
+                                                {% endfor %}
+                                            
+                                            
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No teams assigned.</p>
+                            {% endif %}
+                        </div>
+                        <!-- End of My Teams Section -->
+            
+                    </div>
+                </div>
+                <!-- End of Team Management Section -->
+            </div>
+        
+        
+        
+        
+        
+        
+            <div class="container mt-4">
+                <!-- Button to open assign task page -->
+                <a href="{% url 'assign_task_to_team' request.session.user %}" class="btn btn-primary">
+                    Assign Task to Team Members
+                </a>
+            </div>
+        
+        
+            <div class="container mt-4">
+                <!-- Button to open the assigned tasks page -->
+                <a href="{% url 'show_employee_tasks' request.session.user %}" class="btn btn-primary">
+                    Show Assigned Tasks
+                </a>
+            </div>
+        
+        
+        
+        <div class="container mt-4">
+            <!-- Certification button that triggers the collapse and calls the certificate data -->
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#certificates-section" aria-expanded="false" aria-controls="certificates-section">
+                Certification
+            </button>
+            
+        
+            <!-- Certification section that will be toggled -->
+            <div id="certificates-section" class="collapse mt-3">
+                <h3><a href="{% url 'manager_dashboard_certificates' %}">Certifications</a></h3>
+        
+                <table class="table table-bordered mt-3">
+                    <thead>
+                        <tr>
+                            <th>Certificate Name</th>
+                            <th>Certification Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+        
+                    <tbody>
+                        {% for certificate in certificates %}
+                        <tr>
+                            <td>{{ certificate.certification_name }}</td>
+                            <td>{{ certificate.certification_date }}</td>
+                            <td><a href="{{ certificate.certification_file.url }}" download>Download Certificate</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">No certificates available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+        <div class="container mt-4">
+            <a href="{% url 'enroll_training_manager' %}" class="btn btn-primary">Enroll in Training</a> 
+        </div>
+        
+        
+        <!--kpi updates-->
+        
+        <div class="container mt-4">
+        
+            <a href="{% url 'kpi_dashboard' %}" class="btn btn-primary">KPI and Performance Feedback</a>
+        
+        
+        </div>
+
+        <!-- Manager Dashboard -->
+        <div class="container mt-4">
+            <a href="{% url 'view_manager_profile' request.session.user_id %}" class="btn btn-primary">Profile</a>
+        </div>
+        
+        
+    
+        <!-- Manager Dashboard Template -->
+        <div class="container mt-4">
+            <!-- Project Details Button -->
+            <a href="{% url 'project_manager_dashboard' request.session.user %}" class="btn btn-primary">Show Project Details</a>
+        
+            <!-- Project Details Table, initially hidden -->
+            {% if projects %}
+            <div class="mt-3">
+                <h3>Project Details</h3>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Project ID</th>
+                            <th>Project Name</th>
+                            <th>Description</th>
+                            <th>Start Date</th>
+                            <th>Deadline</th>
+                            <th>Project Manager</th>
+                            <th>Project Status</th>
+                            <th>Update</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr>
+                            <td>{{ project.project_id }}</td>
+                            <td>{{ project.name }}</td>
+                            <td>{{ project.description }}</td>
+                            <td>{{ project.start_date }}</td>
+                            <td>{{ project.deadline }}</td>
+                            <td>{{ project.project_manager }}</td>
+                            <td>{{ project.project_status }}</td>
+                            <td>
+                                <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" 
+                                        data-target="#updateStatusModal{{ project.project_id }}">
+                                    Update Status
+                                </button>
+                            </td>
+                        </tr>
+            
+        
+        
+       
+
+    
+        
+        
+        
+        
+        
+        <!-- Update Status Modal -->
+        <div class="modal fade" id="updateStatusModal{{ project.project_id }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Update Project Status</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form method="POST" action="{% url 'update_managerproject_status' project.project_id %}">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="project_status">Select Status:</label>
+                                <select class="form-control" id="project_status" name="project_status" required>
+                                    <option value="not_started" {% if project.project_status == "not_started" %}selected{% endif %}>Not Started</option>
+                                    <option value="in_progress" {% if project.project_status == "in_progress" %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if project.project_status == "completed" %}selected{% endif %}>Completed</option>
+                                    <option value="overdue" {% if project.project_status == "overdue" %}selected{% endif %}>Overdue</option>
+                                    
+                                </select>
+                            </div>
+                            {% if project.is_late %}
+                            <div class="form-group">
+                            <label for="completion_reason">Reason for Late Completion:</label>
+                            <textarea name="completion_reason" id="completion_reason">{{ project.completion_reason }}</textarea>
+                             </div>
+                            {% endif %}
+                        </div>
+                        
+        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Update Status</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </tbody>
+</table>
+    </div>
+        
+        {% endif %}
+
+    </div>
+
+
+    
+        
+        
+        
+     
+    
+      
+    
+    <!-- Include jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

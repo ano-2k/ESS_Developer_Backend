@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Employee</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Update Employee</h2>
+        
+        <!-- Display success or error messages -->
+        {% if messages %}
+            <div>
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'md_update_employee' employee.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="employeeId">Employee ID</label>
+                <input type="text" class="form-control" id="employeeId" name="employee_id" value="{{ employee.employee_id }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeName">Employee Name</label>
+                <input type="text" class="form-control" id="employeeName" name="employee_name" value="{{ employee.employee_name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeDepartment">Department</label>
+                <select class="form-control" id="employeeDepartment" name="employee_department" required>
+                    {% for department in departments %}
+                        <option value="{{ department.department_id }}" {% if department.id == employee.department.id %}selected{% endif %}>{{ department.department_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeLocation">Location</label>
+                <select class="form-control" id="employeeLocation" name="employee_location" required>
+                    {% for location in locations %}
+                        <option value="{{ location.id }}" {% if location.id == employee.location.id %}selected{% endif %}>{{ location.location_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeShift">Shift</label>
+                <select class="form-control" id="employeeShift" name="employee_shift" required>
+                    {% for shift in shifts %}
+                        <option value="{{ shift.shift_number }}" {% if employee.shift.shift_number == shift.shift_number %}selected{% endif %}>
+                            {{ shift.shift_number }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeEmail">Email</label>
+                <input type="email" class="form-control" id="employeeEmail" name="employee_email" value="{{ employee.email }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeGender">Gender</label>
+                <select class="form-control" id="employeeGender" name="employee_gender" required>
+                    <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if employee.gender == "Other" %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeImage">Employee Image</label><br>
+                <img src="{{ employee.employee_image.url }}" alt="{{ employee.employee_name }}" width="100" class="img-thumbnail mb-2">
+                <input type="file" class="form-control" id="employeeImage" name="employee_image">
+            </div>
+
+            <div class="form-group">
+                <label for="employeeDOB">Date of Birth</label>
+                <input type="date" class="form-control" id="employeeDOB" name="employee_dob" value="{{ employee.dob|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeHD">Hired Date</label>
+                <input type="date" class="form-control" id="employeeHD" name="employee_hd" value="{{ employee.hired_date|date:'Y-m-d' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="employeeUsername">Username</label>
+                <input type="text" class="form-control" id="employeeUsername" name="employee_username" value="{{ employee.username }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Employee</button>
+            <a href="{% url 'md_home' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

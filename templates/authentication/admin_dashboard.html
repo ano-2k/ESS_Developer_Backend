@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<style>
+    .kanban {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    .column {
+        width: 30%;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        min-height: 300px;
+    }
+    .project {
+        background-color: #007bff;
+        color: white;
+        margin: 5px;
+        padding: 10px;
+        border-radius: 3px;
+        cursor: move;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    }
+    .project:hover {
+        opacity: 0.8;
+    }
+    
+    .timeline-container {
+        width: 100%;
+        height: 500px;
+        border: 1px solid #ddd;
+        margin-top: 20px;
+    }
+    .project-color-not_started {
+        background-color: #f0ad4e;
+    }
+    .project-color-in_progress {
+        background-color: #5bc0de;
+    }
+    .project-color-completed {
+        background-color: #5cb85c;
+    }
+
+</style>
+<body>
+    <div class="container">
+        <h1>Welcome to the Admin Dashboard</h1>
+        <p>You are logged in as {{ request.session.user }}</p>
+
+        <!-- Display messages -->
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <a href="{% url 'user_logout' %}" class="btn btn-danger">Logout</a>
+        <a href="{% url 'manager_leave_management' %}" class="btn btn-danger">Manager Leave Management</a>
+        <a href="{% url 'admin_employee_leave_management' %}" class="btn btn-danger">Employee Leave Management</a>
+        <a href="{% url 'payroll_manage' %}" class="btn btn-danger">Payroll Management</a>
+        <a href="{% url 'leave_policies' %}" class="btn btn-danger">Leave Policies</a>
+        <a href="{% url 'manager_leave_policies' %}" class="btn btn-danger">Manager Leave Policies</a>
+        <a href="{% url 'upload_document' %}" class="btn btn-danger">Employee Documents</a>
+        <a href="{% url 'manager_upload_document' %}" class="btn btn-danger">Manager Documents</a>
+        <a href="{% url 'admin_chat' %}" class="btn btn-danger">Chat</a>
+
+        <br><br>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="manager-tab" data-toggle="tab" href="#manager" role="tab" aria-controls="manager" aria-selected="true">Manager</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="employee-tab" data-toggle="tab" href="#employee" role="tab" aria-controls="employee" aria-selected="false">Employee</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="department-tab" data-toggle="tab" href="#department" role="tab" aria-controls="department" aria-selected="false">Department</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="shift-tab" data-toggle="tab" href="#shift" role="tab" aria-controls="shift" aria-selected="false">Shift</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="location-tab" data-toggle="tab" href="#location" role="tab" aria-controls="location" aria-selected="false">Location</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="createproject-tab" data-toggle="tab" href="#createproject" role="tab" aria-controls="createproject" aria-selected="false">Create Project</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="task-tab" data-toggle="tab" href="#task" role="tab" aria-controls="tab" aria-selected="false">Task Assignment</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="role-tab" data-toggle="tab" href="#role" role="tab" aria-controls="tab" aria-selected="false">Role Creation</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="team-tab" data-toggle="tab" href="#team" role="tab" aria-controls="tab" aria-selected="false">Team Creation</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="document-tab" data-toggle="tab" href="#taskDocumentsSection" role="tab" aria-controls="taskDocumentsSection" aria-selected="false">View Task Documents</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="document-tab" data-toggle="tab" href="#taskEmpDocumentsSection" role="tab" aria-controls="taskEmpDocumentsSection" aria-selected="false">View Employee Task Documents</a>
+            </li>
+            <li>
+                <a href="{% url 'create_training_program' %}" class="btn btn-primary">Manage Training & Development</a>
+            </li>
+            <li>
+                <a href="{% url 'kpi_dashboard_admin' %}" class="btn btn-primary">KPI and Performance Feedback</a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="myTabContent">
+            <!-- Manager Tab -->
+            <div class="tab-pane fade show active" id="manager" role="tabpanel" aria-labelledby="manager-tab">
+                <br>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addManagerModal">Add Manager</button>
+                <a href="{% url 'admin_manager_attendance_history' %}" class="btn btn-primary">Attendance</a>
+                <a href="{% url 'admin_manager_reset_requests' %}" class="btn btn-primary">Attendance Reset Requests</a>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#AdminManagerWeeklyChartModal">Weekly chart</button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#managerMonthlyChartModal">Monthly Chart</button>
+                
+                <!-- Table for Managers -->
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Email</th>
+                            <th>Gender</th>
+                            <th>Image</th>
+                            <th>Shift</th>
+                            <th>Date of Birth</th>
+                            <th>Hired Date</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Action</th>
+                            <th>performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for manager in managers %}
+                        <tr>
+                            <td>{{ manager.manager_id }}</td>
+                            <td>{{ manager.manager_name }}</td>
+                            <td>{{ manager.department_name }}</td>
+                            <td>{{ manager.email }}</td>
+                            <td>{{ manager.gender }}</td>
+                            <td><img src="{{ manager.manager_image.url }}" alt="{{ manager.manager_name }}" width="50"></td>
+                            <td>{{ manager.shift }}</td>
+                            <td>{{ manager.dob }}</td>
+                            <td>{{ manager.hired_date }}</td>
+                            <td>{{ manager.username }}</td>
+                            <td>{{ manager.password }}</td>
+                            <td>
+                                <a href="{% url 'delete_manager' manager.manager_id %}" 
+                                onclick="return confirm('Are you sure you want to delete this manager?');" 
+                                class="btn btn-primary">
+                                 Delete
+                             </a>
+                             <a href="{% url 'update_manager' manager.id %}" 
+                                onclick="return confirm('Are you sure you want to update this manager?');" 
+                                class="btn btn-secondary">
+                                 Update
+                             </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'show_performance_manager' manager.username %}" class="btn btn-danger btn-sm"> show performance</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="12">No managers found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <!-- Add Manager Modal -->
+                <div class="modal fade" id="addManagerModal" tabindex="-1" role="dialog" aria-labelledby="addManagerModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <form method="POST" action="{% url 'add_manager' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addManagerModalLabel">Add Manager</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="managerId">Manager ID</label>
+                                        <input type="text" class="form-control" id="managerId" name="manager_id" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerName">Manager Name</label>
+                                        <input type="text" class="form-control" id="managerName" name="manager_name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerDepartment">Department Name</label>
+                                        <select class="form-control" id="managerDepartment" name="department_name">
+                                            {% for department in departments %}
+                                                <option value="{{ department.department_name }}">{{ department.department_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerEmail">Email</label>
+                                        <input type="email" class="form-control" id="managerEmail" name="email" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerGender">Gender</label>
+                                        <select class="form-control" id="managerGender" name="gender" required>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerImage">Manager Image</label>
+                                        <input type="file" class="form-control" id="managerImage" name="manager_image" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerShift">Shift</label>
+                                        <select class="form-control" id="managerShift" name="shift" required>
+                                            {% for shift in shifts %}
+                                                <option value="{{ shift.shift_number }}">{{ shift.shift_number }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerDOB">Manager Date of Birth</label>
+                                        <input type="date" class="form-control" id="managerDOB" name="dob" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerHiredDate">Hired Date</label>
+                                        <input type="date" class="form-control" id="managerHiredDate" name="hired_date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerUsername">Username</label>
+                                        <input type="text" class="form-control" id="managerUsername" name="username" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="managerPassword">Password</label>
+                                        <input type="password" class="form-control" id="managerPassword" name="password" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Add Manager</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+                                    <!-- Admin Manager Weekly Chart Modal -->
+                                    <div class="modal fade" id="AdminManagerWeeklyChartModal" tabindex="-1" role="dialog" aria-labelledby="AdminManagerWeeklyChartModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="AdminManagerWeeklyChartModalLabel">Manager Weekly Attendance Chart</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form method="POST" action="{%url 'admin_manager_weekly_chart'%}">
+                                                        {% csrf_token %}
+                                                        <div class="form-group">
+                                                            <label for="manager_id">Manager ID:</label>
+                                                            <input type="text" class="form-control" id="manager_id" name="manager_id" placeholder="Enter Manager ID" required>
+                                                        </div>
+                                                        <button type="submit" class="btn btn-primary">Show Chart</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                          <!-- End of Admin manager weekly chart modal -->
+            <!--admin manager monthly chartmodal-->
+            <div class="modal fade" id="managerMonthlyChartModal" tabindex="-1" role="dialog" aria-labelledby="managerMonthlyChartModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="managerMonthlyChartModalLabel">Manager Monthly Attendance Chart</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'admin_manager_monthly_chart' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="manager_id">Manager ID:</label>
+                                    <input type="text" class="form-control" id="manager_id" name="manager_id" placeholder="Enter Manager ID" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Show Chart</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End of Admin employee monthly chart modal -->
+
+            <!-- Employee Tab -->
+            <div class="tab-pane fade" id="employee" role="tabpanel" aria-labelledby="employee-tab">
+                <br>
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#addEmployeeModal">Add Employee</button>
+                <a href="{% url 'admin_employee_attendance_history' %}" class="btn btn-primary">Attendance</a>
+                <a href="{% url 'admin_employee_reset_requests' %}" class="btn btn-primary">Attendance Reset Requests</a>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#employeeweeklychartModal">Weekly Chart</button>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#employeemonthlychartModal1">Monthly Chart</button>
+                <!-- Table for Employees -->
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Email</th>
+                            <th>Gender</th>
+                            <th>Image</th>
+                            <th>Shift</th>
+                            <th>Date of Birth</th>
+                            <th>Hired Date</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Action</th>
+                            <th>performance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.employee_id }}</td>
+                            <td>{{ employee.employee_name }}</td>
+                            <td>{{ employee.department_name }}</td>
+                            <td>{{ employee.email }}</td>
+                            <td>{{ employee.gender }}</td>
+                            <td><img src="{{ employee.employee_image.url }}" alt="{{ employee.employee_name }}" width="50"></td>
+                            <td>{{ employee.shift }}</td>
+                            <td>{{ employee.dob }}</td>
+                            <td>{{ employee.hired_date }}</td>
+                            <td>{{ employee.username }}</td>
+                            <td>{{ employee.password }}</td>
+                            <td>
+                                <a href="{% url 'delete_employee' employee.employee_id %}" 
+                                onclick="return confirm('Are you sure you want to delete this employee?');" 
+                                class="btn btn-primary">
+                                 Delete
+                             </a>
+                             <a href="{% url 'update_employee' employee.id %}" 
+                                onclick="return confirm('Are you sure you want to update this employee?');" 
+                                class="btn btn-secondary">
+                                 Update
+                             </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'show_performance_employee' employee.username %}" class="btn btn-danger btn-sm">show performance</a>    
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="12">No employees found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <!-- Add Employee Modal -->
+                <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <form method="POST" action="{% url 'add_employee' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addEmployeeModalLabel">Add Employee</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <label for="employeeId">Employee ID</label>
+                                        <input type="text" class="form-control" id="employeeId" name="employee_id" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeName">Employee Name</label>
+                                        <input type="text" class="form-control" id="employeeName" name="employee_name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeDepartment">Department Name</label>
+                                        <select class="form-control" id="employeeDepartment" name="department_name" required>
+                                            {% for department in departments %}
+                                                <option value="{{ department.department_name }}">{{ department.department_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeEmail">Email</label>
+                                        <input type="email" class="form-control" id="employeeEmail" name="email" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeGender">Gender</label>
+                                        <select class="form-control" id="employeeGender" name="gender" required>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeImage">Employee Image</label>
+                                        <input type="file" class="form-control" id="employeeImage" name="employee_image" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeShift">Shift</label>
+                                        <select class="form-control" id="employeeShift" name="shift" required>
+                                            {% for shift in shifts %}
+                                                <option value="{{ shift.shift_number }}">{{ shift.shift_number }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeDOB">Employee Date of Birth</label>
+                                        <input type="date" class="form-control" id="employeeDOB" name="dob" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeHiredDate">Hired Date</label>
+                                        <input type="date" class="form-control" id="employeeHiredDate" name="hired_date" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeeUsername">Username</label>
+                                        <input type="text" class="form-control" id="employeeUsername" name="username" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="employeePassword">Password</label>
+                                        <input type="password" class="form-control" id="employeePassword" name="password" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- admin Employee Weekly Chart Modal -->
+             <div class="modal fade" id="employeeweeklychartModal" tabindex="-1" role="dialog" aria-labelledby="employeeweeklychartModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="employeeweeklychartModalLabel">Employee Weekly Attendance Chart</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'admin_employee_weekly_chart' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="employee_id">Employee ID:</label>
+                                    <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Enter Employee ID" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Show Chart</button>
+                            </form>
+                        </div>
+                    </div> 
+         </div>
+    </div>   
+                            <!--admin employee monthly chart modal-->
+                                     <div class="modal fade" id="employeemonthlychartModal1" tabindex="-1" role="dialog" aria-labelledby="employeemonthlychartModal1Label" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="employeemonthlychartModal1Label">Employee Monthly Attendance Chart</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form method="POST" action="{% url 'admin_employee_monthly_chart' %}">
+                                                        {% csrf_token %}
+                                                        <div class="form-group">
+                                                            <label for="employee_id">Employee ID:</label>
+                                                            <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="Enter Employee ID" required>
+                                                        </div>
+                                                        <button type="submit" class="btn btn-primary">Show Chart</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                        <!-- Department Tab -->
+                        <div class="tab-pane fade" id="department" role="tabpanel" aria-labelledby="department-tab">
+                            <h3 class="mt-4">Departments</h3>
+                            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addDepartmentModal">
+                                Add Department
+                            </button>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Department ID</th>
+                                        <th>Department Name</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for department in departments %}
+                                    <tr>
+                                        <td>{{ department.department_id }}</td>
+                                        <td>{{ department.department_name }}</td>
+                                        <td>
+                                            <a href="{% url 'delete_department' department.department_id %}" 
+                                            onclick="return confirm('Are you sure you want to delete this department?');" 
+                                            class="btn btn-primary">
+                                             Delete
+                                         </a>
+                                         <a href="{% url 'update_department' department.id %}" 
+                                            onclick="return confirm('Are you sure you want to update this department?');" 
+                                            class="btn btn-secondary">
+                                            Update
+                                        </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2">No departments found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <!-- Add Department Modal -->
+                            <div class="modal fade" id="addDepartmentModal" tabindex="-1" role="dialog" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'add_department' %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="addDepartmentModalLabel">Add Department</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                    <label for="departmentId">Department ID</label>
+                                                    <input type="text" class="form-control" id="departmentID" name="department_id" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="departmentName">Department Name</label>
+                                                    <input type="text" class="form-control" id="departmentName" name="department_name" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Add Department</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+            
+                        <!-- Shift Tab -->
+                        <div class="tab-pane fade" id="shift" role="tabpanel" aria-labelledby="shift-tab">
+                            <h3 class="mt-4">Shifts</h3>
+                            <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addShiftModal">
+                                Add Shift
+                            </button>
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Shift Number</th>
+                                        <th>Shift Start</th>
+                                        <th>Shift End</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for shift in shifts %}
+                                    <tr>
+                                        <td>{{ shift.shift_number }}</td>
+                                        <td>{{ shift.shift_start_time }}</td>
+                                        <td>{{ shift.shift_end_time }}</td>
+                                        <td>
+                                            <a href="{% url 'delete_shift' shift.shift_number %}" 
+                                            onclick="return confirm('Are you sure you want to delete this shift?');" 
+                                            class="btn btn-primary">
+                                             Delete
+                                         </a>
+                                         <a href="{% url 'update_shift' shift.id %}" 
+                                            onclick="return confirm('Are you sure you want to update this shift?');" 
+                                            class="btn btn-secondary">
+                                            Update
+                                        </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4">No shifts found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <!-- Add Shift Modal -->
+                            <div class="modal fade" id="addShiftModal" tabindex="-1" role="dialog" aria-labelledby="addShiftModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{% url 'add_shift' %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="addShiftModalLabel">Add Shift</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                    <label for="shiftNumber">Shift Number</label>
+                                                    <input type="text" class="form-control" id="shiftNumber" name="shift_number" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="shiftStart">Shift Start</label>
+                                                    <input type="time" class="form-control" id="shiftStart" name="shift_start" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="shiftEnd">Shift End</label>
+                                                    <input type="time" class="form-control" id="shiftEnd" name="shift_end" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Add Shift</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+            
+                        <!-- Location Tab -->
+    <div class="tab-pane fade" id="location" role="tabpanel" aria-labelledby="location-tab">
+    <h3 class="mt-4">Locations</h3>
+    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addLocationModal">
+        Add Location
+    </button>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Location ID</th>
+                <th>Location Name</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for location in locations %}
+            <tr>
+                <td>{{ location.location_id }}</td>
+                <td>{{ location.location_name }}</td>
+                <td>
+                    <a href="{% url 'delete_location' location.location_id %}" 
+                       onclick="return confirm('Are you sure you want to delete this location?');" 
+                       class="btn btn-primary">
+                        Delete
+                    </a>
+                    <a href="{% url 'update_location' location.id %}" 
+                    onclick="return confirm('Are you sure you want to update this location?');" 
+                    class="btn btn-secondary">
+                    Update
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No locations found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Add Location Modal -->
+    <div class="modal fade" id="addLocationModal" tabindex="-1" role="dialog" aria-labelledby="addLocationModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'add_location' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addLocationModalLabel">Add Location</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="locationId">Location ID</label>
+                            <input type="text" class="form-control" id="locationId" name="location_id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="locationName">Location Name</label>
+                            <input type="text" class="form-control" id="locationName" name="location_name" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add Location</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- createproject Tab -->
+<div class="tab-pane fade" id="createproject" role="tabpanel" aria-labelledby="createproject-tab">
+    <h3 class="mt-4">Create project</h3>
+    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addcreateprojectModal">
+        Create Project
+    </button>
+    <!-- Link to Kanban Dashboard -->
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Project id</th>
+                <th>Project Name</th>
+                <th>Description</th>
+                <th>Start Date</th>
+                <th>Deadline</th>
+                <th>project Manager</th>
+                <th>Project Status</th>
+                <th>Action</th>
+                <th>Update</th>
+                <th>check Report</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for createproject in createprojects %}
+            <tr>
+                <td>{{ createproject.project_id }}</td>
+                <td>{{ createproject.name }}</td>
+                <td>{{ createproject.description }}</td>
+                <td>{{ createproject.start_date }}</td>
+                <td>{{ createproject.deadline }}</td>
+                <td>{{ createproject.project_manager}}</td>
+                <td>{% if createproject.project_status == 'completed' %}
+                    <span class="badge badge-success">Completed</span>
+                  {% elif createproject.project_status == 'in_progress' %}
+                    <span class="badge badge-warning">In Progress</span>
+                  {% elif createproject.project_status == 'overdue' %}
+                    <span class="badge badge-danger">Overdue</span>
+                  {% else %}
+                    <span class="badge badge-secondary">Not Started</span>
+                  {% endif %}</td>
+                <td>
+                    <a href="{% url 'delete_project' createproject.project_id %}" 
+                    onclick="return confirm('Are you sure you want to delete this project?');" 
+                    class="btn btn-danger btn-sm">
+                     Delete
+                 </a>
+                </td>
+                <td>
+                    <a href="{% url 'edit_project' createproject.project_id %}" onclick="return confirm('Are you sure you want to update this project?');" 
+                    class="btn btn-danger btn-sm">Update
+                    </a>
+                </td>
+                <td>
+                    <a href="{% url 'show_project_status' createproject.project_id  %}" class="btn btn-danger btn-sm">Check Project Report</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">No projects found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Add createproject Modal -->
+    <div class="modal fade" id="addcreateprojectModal" tabindex="-1" role="dialog" aria-labelledby="addcreateprojectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'create_project' %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addcreateprojectModalLabel">Create project</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="projectId">Project ID</label>
+                            <input type="text" class="form-control" id="projectID" name="project_id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="projectName">Project Name</label>
+                            <input type="text" class="form-control" id="projectName" name="project_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="projectdescription">Project Description</label>
+                            <textarea type="text" class="form-control" id="projectdescription" name="project_description" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="projectstartdate">Project StartDate</label>
+                            <input type="date" class="form-control" id="projectstartdate" name="project_startdate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="projectdeadline">Project DeadLine</label>
+                            <input type="date" class="form-control" id="projectdeadline" name="project_deadline" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="project_manager">Project Manager</label>
+                            <select class="form-control" id="project_manager" name="project_manager" required>
+                                {% for manager in managers %}
+                                    <option value="{{ manager.manager_name }}">{{ manager.manager_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+            
+
+<!-- task Tab -->
+<div class="tab-pane fade" id="task" role="tabpanel" aria-labelledby="task-tab">
+    <h3 class="mt-4">Task</h3>
+    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addtaskModal">
+     Assign Task
+    </button>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task_Id</th>
+                <th>project Manager</th>
+                <th>Projects</th>
+                <th>task_name</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Start Date</th>
+                <th>Deadline</th>
+                <th>task_Status</th>
+                
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for createtask in createtasks %}
+            <tr>
+                <td>{{ createtask.task_id}}</td>
+                <td>{{ createtask.project_manager }}</td>
+                <td>{{ createtask.project_name }}</td>
+                <td>{{ createtask.task_name }}</td>
+                <td>{{ createtask.description }}</td>
+                <td>{{ createtask.priority }}</td>
+                <td>{{ createtask.start_date }}</td>
+                <td>{{ createtask.deadline }}</td>
+                <td>{{ createtask.status }}</td>
+                
+                <td>
+                    <a href="{% url 'delete_task' createtask.task_id %}" 
+                    onclick="return confirm('Are you sure you want to delete this task?');" 
+                    class="btn btn-danger btn-sm">
+                     Delete
+                 </a>
+                </td>
+                <td>
+                    <a href="{% url 'edit_task' createtask.task_id %}" onclick="return confirm('Are you sure you want to update this project?');" 
+                    class="btn btn-danger btn-sm">Update
+                    </a>
+                </td>
+                
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">No tasks found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Add task Modal -->
+    <div class="modal fade" id="addtaskModal" tabindex="-1" role="dialog" aria-labelledby="addtaskModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'create_task'  %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addtaskModalLabel">Create Task</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="task_id">Task Id</label>
+                            <input type="text" class="form-control" id="task_id" name="task_id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="project_manager">Project Manager</label>
+                            <select class="form-control" id="project_manager" name="project_manager" required>
+                                {% for manager in managers %}
+                                    <option value="{{ manager.manager_name }}">{{ manager.manager_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="project_name">Project Name</label>
+                            <select class="form-control" id="project_name" name="project_name" required>
+                                {% for createproject in createprojects %}
+                                    <option value="{{ createproject.name }}">{{ createproject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="task_name">Task Name</label>
+                            <input type="text" class="form-control" id="task_name" name="task_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="taskdescription">Task Description</label>
+                            <textarea type="text" class="form-control" id="taskdescription" name="task_description" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="priority">Project Priority</label>
+                            <select class="form-control" id="priority" name="priority" required>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="taskstartdate">Task StartDate</label>
+                            <input type="date" class="form-control" id="taskstartdate" name="task_startdate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskdeadline">Task DeadLine</label>
+                            <input type="date" class="form-control" id="taskdeadline" name="task_deadline" required>
+                        </div>
+                        
+            
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create Task</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+   
+
+
+
+
+
+
+
+<!-- role Tab -->
+<div class="tab-pane fade" id="role" role="tabpanel" aria-labelledby="role-tab">
+    <h3 class="mt-4">Role</h3>
+    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addroleModal">
+     Create Role
+    </button>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Roll Id</th>
+                <th>Role Name </th>
+                
+                
+            </tr>
+        </thead>
+        <tbody>
+            {% for createrole in createroles %}
+            <tr>
+                <td>{{ createrole.role_id}}</td>
+                <td>{{ createrole.role_name }}</td>
+                
+                
+                <td>
+                    <a href="{% url 'delete_role' createrole.id %}" 
+                    onclick="return confirm('Are you sure you want to delete this role?');" 
+                    class="btn btn-danger btn-sm">
+                     Delete
+                 </a>
+                </td>
+                <td>
+                    <a href="{% url 'edit_role' createrole.id %}" onclick="return confirm('Are you sure you want to update this role?');" 
+                    class="btn btn-danger btn-sm">Update
+                    </a>
+                </td>
+                
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">No roles found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Add role Modal -->
+    <div class="modal fade" id="addroleModal" tabindex="-1" role="dialog" aria-labelledby="addroleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'create_role'  %}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addroleModalLabel">Create Role</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="role_id">Role Id</label>
+                            <input type="text" class="form-control" id="role_id" name="role_id" required>
+                        </div>
+                       
+                        <div class="form-group">
+                            <label for="role_name">Role Name</label>
+                            <input type="text" class="form-control" id="role_name" name="role_name" required>
+                        </div>
+                        
+            
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Create Role</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- team Tab -->
+<div class="tab-pane fade" id="team" role="tabpanel" aria-labelledby="team-tab">
+    <h3 class="mt-4">Teams</h3>
+    <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#addteamModal">
+     Create Team
+    </button>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Team name</th>
+                <th>Project name</th>
+                <th>Team Task</th>
+                <th>Team Manager</th>
+                <th>Team Leader</th>
+                <th>Team members</th>
+                <th>Team id</th>
+                
+                
+            </tr>
+        </thead>
+        <tbody>
+            
+                {% for team in teams %}
+                <tr>
+                
+                        <td>{{ team.team_name }}</td>
+                        <td>{{ team.project.name }}</td>
+                        <td>{{ team.team_task }}</td>
+                        <td>{{team.manager}}</td>
+                        <td>{{ team.team_leader.employee_name }}</td>
+                       <td>
+                        
+                            {% for member in team.members.all %}
+                              {{ member.employee_name }} <br>
+                            {% endfor %}
+                        
+                       </td>
+                       <td>{{team.team_id}}</td>
+                    
+                       <td>
+                        <a href="{% url 'delete_team'  team.team_id  %}" 
+                        onclick="return confirm('Are you sure you want to delete this team?');" 
+                        class="btn btn-danger btn-sm">
+                         Delete
+                        </a>
+                        </td>
+
+                        <td>
+                            <a href="{% url 'edit_team' team.team_id %}" onclick="return confirm('Are you sure you want to update this team?');" 
+                            class="btn btn-danger btn-sm">Update
+                            </a>
+                        </td>
+                    
+                
+                
+                
+                
+                
+                </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2">No teams found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Add team Modal -->
+    <div class="modal fade" id="addteamModal" tabindex="-1" role="dialog" aria-labelledby="addteamModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{% url 'create_team'  %}">
+                    {% csrf_token %}
+                 
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addteamModalLabel">Create Role</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="team_name">Team Name:</label>
+                        <input type="text" class="form-control" id="team_name" name="team_name" required>
+                    </div>
+            
+                    <div class="form-group">
+                        <label for="project">Select Project:</label>
+                        <select class="form-control" id="project" name="project" required>
+                            {% for createproject in createprojects %}
+                                <option value="{{ createproject.name }}">{{ createproject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+            
+                    <div class="form-group">
+                        <label for="team_task">Team_Task:</label>
+                        <input type="text" class="form-control" id="team_task" name="team_task" required>
+                    </div>
+            
+                    
+            
+                    <div class="form-group">
+                        <label for="manager">Select Manager:</label>
+                        <select class="form-control" id="manager" name="manager" required>
+                            {% for manager in managers %}
+                            <option value="{{ manager.manager_name }}">{{ manager.manager_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+            
+                    <div class="form-group">
+                        <label for="team_leader">Select Team Leader:</label>
+                        <select class="form-control" id="team_leader" name="team_leader" required>
+                            {% for employee in employees %}
+                            <option value="{{ employee.employee_name }}">{{ employee.employee_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+            
+                    <div class="form-group">
+                        <label for="members">Select Team Members:</label>
+                        <select class="form-control" id="members" name="members" multiple required>
+                            {% for employee in employees %}
+                            <option value="{{ employee.employee_name }}">{{ employee.employee_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="team_id">Team Id:</label>
+                        <input type="text" class="form-control" id="team_id" name="team_id" required>
+                    </div>
+            
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Create Team </button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Collapsible Task Documents Section -->
+<div class="collapse mt-3" id="taskDocumentsSection">
+    <div class="card card-body">
+        <h2>Task Documents</h2>
+        <a href="{% url 'admin_view_documents'%}">show documents</a>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Uploaded By</th>
+                    <th>Document</th>
+                    <th>Uploaded At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for document in documents %}
+                <tr>
+                    <td>{{ document.task.task_name }}</td>
+                    <td>{{ document.uploaded_by }}</td>
+                    <td><a href="{{ document.document.url }}" download>Download</a></td>
+                    <td>{{ document.uploaded_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+<!-- Collapsible EmpTask Documents Section -->
+<div class="collapse mt-3" id="taskEmpDocumentsSection">
+    <div class="card card-body">
+        <h2>Task Employee Documents</h2>
+        <a href="{% url 'admin_view_documents'%}">show documents</a>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Uploaded By</th>
+                    <th>Document</th>
+                    <th>Uploaded At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for document in empdocuments %}
+                <tr>
+                    <td>{{ document.employee_task.task_name }}</td>
+                    <td>{{ document.uploaded_by }}</td>
+                    <td><a href="{{ document.document.url }}" download>Download</a></td>
+                    <td>{{ document.uploaded_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+
+<div class="container">
+    <h1 class="mt-4">Kanban Board</h1>
+    <a href="{% url 'kanban_dashboard' %}" class="btn btn-primary mb-3">Go to Kanban Board</a>
+    <div class="kanban">
+        <!-- Not Started Projects Column -->
+        <div class="column" id="not-started" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h4>Not Started</h4>
+            {% for project in not_started_projects %}
+            <div class="project" draggable="true" ondragstart="drag(event)" data-id="{{ project.project_id }}">
+                {{ project.name }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- In Progress Projects Column -->
+        <div class="column" id="in-progress" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h4>In Progress</h4>
+            {% for project in in_progress_projects %}
+            <div class="project" draggable="true" ondragstart="drag(event)" data-id="{{ project.project_id }}">
+                {{ project.name }}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Completed Projects Column -->
+        <div class="column" id="completed" ondrop="drop(event)" ondragover="allowDrop(event)">
+            <h4>Completed</h4>
+            {% for project in completed_projects %}
+            <div class="project" draggable="true" ondragstart="drag(event)" data-id="{{ project.project_id }}">
+                {{ project.name }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    
+</div>
+
+
+            
+<script>
+    function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.dataset.id);
+            ev.dataTransfer.setData("status", ev.target.dataset.status);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            var dataId = ev.dataTransfer.getData("text");
+            var newStatus = ev.target.dataset.status;
+
+            // Find the project element
+            var projectElement = document.querySelector(`.project[data-id='${dataId}']`);
+            
+            // Move the project element to the new column
+            ev.target.appendChild(projectElement);
+            
+            // Update the project status in the database using AJAX
+            $.ajax({
+                url: '{% url "update_project_status" %}',  // Adjust to your update URL
+                type: 'POST',
+                data: {
+                    'id': dataId,
+                    'status': newStatus,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    console.log('Project status updated successfully:', response);
+                },
+                error: function(xhr) {
+                    console.error('Error updating project status:', xhr.responseText);
+                }
+            });
+
+            // Update the data-status attribute of the project element
+            projectElement.dataset.status = newStatus;
+        }
+</script>
+
+{% load static %}
+
+<h1>Project Timeline</h1>
+
+<!-- Container for the timeline -->
+<div id="projectTimeline" class="timeline-container"></div>
+
+<link href="{% static 'css/vis-timeline-graph2d.min.css' %}" rel="stylesheet" />
+<script src="{% static 'js/vis-timeline-graph2d.min.js' %}"></script>
+
+
+    
+    
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch project data from the Django backend
+        fetch('/get_project_data/')
+            .then(response => response.json())
+            .then(projects => {
+                    
+                // Call the function to initialize the timeline with fetched project data
+                initializeTimeline(projects);
+            });
+               
+
+        function initializeTimeline(projects) {
+            // Map the projects into Vis.js format
+            const items = new vis.DataSet(
+                projects.map(project => ({
+                    id: project.id,
+                    content: project.name,
+                    start: project.start_date,
+                    end: project.deadline,
+                    className: `project-color-${project.status}`  // Style based on project status
+                }))
+            );
+
+            // Create the timeline in the specified container
+            const container = document.getElementById('projectTimeline');
+            const options = {
+                editable: false,  // No drag-and-drop editing
+                margin: {
+                    item: 10,
+                    axis: 5,
+                },
+                showCurrentTime: true,  // Show the current date line
+                start: new Date(),  // Start from today
+                end: new Date((new Date()).getTime() + 24 * 60 * 60 * 1000 * 60),  // Show 60 days ahead
+                zoomMin: 1000 * 60 * 60 * 24 * 7  // Minimum zoom level: 1 week
+            };
+             // Initialize the timeline
+            const timeline = new vis.Timeline(container, items, options);
+        }
+    });
+</script>    
+
+    <!-- JavaScript and Bootstrap dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

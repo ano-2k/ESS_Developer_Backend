@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Training Progress</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            margin-top: 20px;
+        }
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .btn-action {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Training Progress</h2>
+    <table class="table table-bordered table-hover">
+        <thead class="thead-light">
+            <tr>
+                <th>Program</th>
+                <th>Participant Employee</th>
+                <th>Participant Manager</th>
+                <th>Status</th>
+                <th>Completion Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for participation in participations %}
+            <tr>
+                <td>{{ participation.program.name }}</td>
+                <td>{{ participation.employee }}</td>
+                <td>{{ participation.manager }}</td>
+                <td>{{ participation.completion_status }}</td>
+                <td>{{ participation.completion_date }}</td>
+                <td>
+                    <a href="{% url 'view_details' participation.id %}" class="btn btn-info btn-action">View Details</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No training progress data available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

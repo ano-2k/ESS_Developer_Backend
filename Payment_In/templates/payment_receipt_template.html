@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Receipt</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .invoice { width: 100%; padding: 20px; border: 1px solid #000; }
+        .invoice-header, .invoice-body, .invoice-footer { margin-bottom: 20px; }
+        .invoice-header h2 { margin: 0; }
+        .invoice-body table { width: 100%; border-collapse: collapse; }
+        .invoice-body th, .invoice-body td { border: 1px solid #000; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="invoice">
+        <div class="invoice-header">
+            <h2>{{ business_name }}</h2>
+            <p>Payment Receipt</p>
+        </div>
+
+        <div class="invoice-body">
+            <p><strong>Payment In Number:</strong> {{ payment_in_number }}</p>
+            <p><strong>Invoice Number:</strong> {{ invoice_number }}</p>
+            <p><strong>Invoice Date:</strong> {{ invoice_date }}</p>
+            <p><strong>Amount Paid:</strong> ₹{{ payment_amount }}</p>
+        </div>
+
+        <div class="invoice-footer">
+            <p>Thank you for your payment!</p>
+        </div>
+    </div>
+</body>
+</html>

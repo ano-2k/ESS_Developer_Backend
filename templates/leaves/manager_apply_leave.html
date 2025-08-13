@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Apply Leave</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .form-container {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        // JavaScript for validating date fields
+        function validateDates() {
+            const startDate = new Date(document.getElementById('start_date').value);
+            const endDate = new Date(document.getElementById('end_date').value);
+            const today = new Date();
+
+           
+            if (startDate > endDate) {
+                alert("End date must be after or equal to start date.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <div class="container form-container">
+        <h1>Apply for Leave</h1>
+
+        
+        <!-- Display messages -->
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <p>You are logged in as {{ request.session.user }}</p>
+
+      
+        
+        <form method="POST" action="{% url 'manager_apply_leave' %}" onsubmit="return validateDates();">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="start_date">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" required>
+            </div>
+            <div class="form-group">
+                <label for="end_date">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+            <div class="form-group"> 
+                <label for="leave_type">Leave Type</label>
+                <select id="leave_type" name="leave_type" class="form-control" required>
+                    <option value="">Select Leave Type</option>
+                    <option value="medical">Medical</option>
+                    <option value="vacation">Vacation</option>
+                    <option value="personal">Personal</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="reason">Reason</label>
+                <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Send Request</button>
+        </form>
+        <a href="{% url 'manager_leave' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <!-- Include jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

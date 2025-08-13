@@ -1,0 +1,144 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip for {{ payroll.month|date:"F Y" }}</title>
+    <style>
+        {% comment %} body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        p {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+        } {% endcomment %}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Payslip for {{ payroll.user }} - {{ payroll.month|date:"F Y" }}</h1>
+        <p><strong>User ID:</strong> {{ payroll.user_id }}</p>
+        <p><strong>Base Salary:</strong> {{ payroll.base_salary }}</p>
+        <p><strong>Total Working Hours:</strong> {{ payroll.total_working_hours }}</p>
+        <p><strong>Total Overtime Hours:</strong> {{ payroll.overtime_hours }}</p>
+        <p><strong>Net Salary:</strong> {{ payroll.net_salary }}</p>
+
+        <div class="footer">
+            <p>Thank you for your hard work!</p>
+            <p>For any questions, please contact HR.</p>
+        </div>
+    </div>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip for {{ payroll.month|date:"F Y" }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        p {
+            font-size: 16px;
+            margin: 10px 0;
+            color: #333;
+        }
+        strong {
+            color: #333;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .info-table th, .info-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .info-table th {
+            background-color: #f8f8f8;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Payslip for {{ payroll.user }} - {{ payroll.month|date:"F Y" }}</h1>
+
+        <table class="info-table">
+            <tr>
+                <th>User ID</th>
+                <td>{{ payroll.user_id }}</td>
+            </tr>
+            <tr>
+                <th>Base Salary</th>
+                <td>{{ payroll.base_salary }}</td>
+            </tr>
+            <tr>
+                <th>Total Working Hours</th>
+                <td>{{ payroll.total_working_hours }}</td>
+            </tr>
+            <tr>
+                <th>Total Overtime Hours</th>
+                <td>{{ payroll.overtime_hours }}</td>
+            </tr>
+            <tr>
+                <th>Net Salary</th>
+                <td>{{ payroll.net_salary }}</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <p>Thank you for your hard work!</p>
+            <p>For any questions, please contact HR.</p>
+        </div>
+    </div>
+</body>
+</html>

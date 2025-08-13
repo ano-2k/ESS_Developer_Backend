@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; }
+        .container { max-width: 600px; background: #ffffff; margin: 20px auto; padding: 20px; border-radius: 10px; }
+        .header { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        .details { margin-bottom: 20px; padding: 15px; background: #f9f9f9; }
+        .items-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .items-table th { background-color: #007BFF; color: white; }
+        .total { font-size: 18px; font-weight: bold; margin-top: 20px; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Proforma Invoice Details</div>
+        <div class="details">
+            <p><strong>Proforma Invoice Number:</strong> {{ proforma_invoice_number }}</p>
+            <p><strong>Proforma Invoice Date:</strong> {{ proforma_invoice_date }}</p>
+            <p><strong>Party Name:</strong> {{ party_name }}</p>
+            <p><strong>Party Mobile Number:</strong> {{ party_mobile_number }}</p>
+            <p><strong>Shipping Address:</strong> {{ shipping_address }}</p>
+        </div>
+        <h3>Items:</h3>
+        <table class="items-table">
+            <tr>
+                <th>Item Name</th>
+                <th>Quantity</th>
+                <th>Price per Item</th>
+                <th>Discount</th>
+                <th>Tax</th>
+                <th>Total</th>
+            </tr>
+            {% for item in proforma_invoice_items %}
+            <tr>
+                <td>{{ item.item_name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ item.price_per_item }}</td>
+                <td>₹{{ item.discount }}</td>
+                <td>{{ item.tax }}%</td>
+                <td>₹{{ item.amount }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p class="total">Total Amount: ₹{{ final_total }}</p>
+    </div>
+</body>
+</html>

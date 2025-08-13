@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% csrf_token %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPI Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}"> <!-- Link to your CSS file -->
+    <script src="{% static 'js/dashboard.js' %}"></script> <!-- Link to your JS file if needed -->
+</head>
+<body>
+    <!-- Navigation Bar -->
+     <h1>Welcome to KPI and Feedback System</h1>
+
+    <div class="container">
+        <h1>For Managers</h1>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li><a href="{% url 'create_performance_review_manager' %}" class="btn btn-primary">Create_Performance Reviews Manager</a></li>
+            <li><a href="{% url 'create_goal_manager' %}" class="btn btn-primary">Create Goal Setting Manager</a></li>
+            <li><a href="{% url 'create_feedback_manager' %}" class="btn btn-primary">Create_Feedback System Manager</a></li>
+            
+            
+        </ul>
+        <h1>for Employees</h1>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li><a href="{% url 'performance_review_list'  %}" class="btn btn-primary">View performance Reviews Employees</a></li>
+            <li><a href="{% url 'goal_review_list'  %}" class="btn btn-primary">View Goal Setting Employees </a></li>
+            <li><a href="{% url 'feedback_list' %}" class="btn btn-primary">View Feedback System Employees</a></li>
+            
+        </ul>
+
+    <div class="container">
+
+        <h1>Feedbacks Review</h1>
+        <a href="{% url 'admin_feedback_dashboard' %}" class="btn btn-primary">Feedback</a>
+    </div>
+
+    </div>
+
+    <div>
+        <h1>performancechart employees and managers</h1>
+    </div>
+
+    
+
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; 2024 KPI Management System</p>
+    </footer>
+</body>
+</html>

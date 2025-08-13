@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Form</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    
+    <div class="container">        
+        <h1>Attendance Form</h1>
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        <form method="POST" action="{% url 'submit_employee_attendance' %}">
+            {% csrf_token %}
+            {% if show_checkout %}
+                <button type="submit" name="check_out" class="btn btn-danger">Check Out</button>
+                <p>{{ thank_you_message }}</p>                
+            {% else %}
+                <!-- Display Assigned Shift -->
+                <label for="shift">Assigned Shift:</label>
+                <input type="text" name="shift" value="{{ shift.shift_number }}" readonly class="form-control">
+
+                <!-- Check-in Form -->
+                <label for="location">Location:</label>
+                <select name="location" required class="form-control">
+                    {% for location in locations %}
+                        <option value="{{ location.location_name }}">{{ location.location_name }}</option>
+                    {% endfor %}
+                </select>
+        
+                <label for="notes">Notes:</label>
+                <textarea name="notes" required class="form-control"></textarea>
+
+                <input type="hidden" name="latitude" id="latitude" value="">
+                <input type="hidden" name="longitude" id="longitude" value="">
+        
+                <button type="submit" name="check_in" class="btn btn-primary mt-3" onclick="getLocation()">Check In</button>
+                <!-- Show the reset request link -->
+            <p>If you accidentally checked out, <a href="#" data-toggle="modal" data-target="#resetRequestModal">click here to request a reset</a>.</p>
+            {% endif %}
+        </form>
+        <br>  
+        <button onclick="getlocation()">Get Location</button>      
+        <a href="{% url 'employee_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>        
+    </div>
+
+    <!-- Modal for Reset Request -->
+    <div class="modal fade" id="resetRequestModal" tabindex="-1" aria-labelledby="resetRequestModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetRequestModalLabel">Request Check-Out Reset</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{% url 'employee_request_check_out_reset' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="request_type">Request Type:</label>
+                            <select name="request_type" class="form-control" required>
+                                <option value="Accidentally">Accidentally Checked Out</option>
+                                <option value="Extend_time">Extend Work Time</option>
+                                <option value="Not_completed_work">Not Completed Work</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="request_description">Describe Your Request:</label>
+                            <textarea name="request_description" class="form-control" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Submit Request</button>
+                    </div>
+                </form>                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const getlocation = () =>{
+            //Get the location from the user
+            if(navigator.geolocation){
+                navigator.geolocation.getCurrentPosition((position) => {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                    console.log(position);
+                });
+            }
+        };
+    </script>
+
+    <script>
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                    let lat=position.coords.latitude;
+                    let long=position.coords.longitude
+                    console.log(lat, long)
+                }, function(error) {
+                    alert("Error retrieving location: " + error.message);
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.0.7/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Task Management Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+        }
+        .badge {
+            margin-left: 5px;
+        }
+        .btn-primary, .btn-info {
+            margin-right: 10px;
+        }
+        .task-item {
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 0;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="mb-4">
+        <h1 class="text-center">Task Management Dashboard</h1>
+    </div>
+    
+    <!-- Task Management Button -->
+    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#taskManagementSection" aria-expanded="false" aria-controls="taskManagementSection">
+        Task Management
+    </button>
+    
+    <!-- Task Management Section -->
+    <div class="collapse mt-3" id="taskManagementSection">
+        <div class="card">
+            <div class="card-header">
+                <h5>My Tasks</h5>
+            </div>
+            <div class="card-body">
+
+                <!-- Show My Tasks Button -->
+                <a href="{% url 'show_my_tasks' %}" class="btn btn-info mb-3">
+                    Show My Tasks
+                </a>
+
+                <!-- My Tasks Section -->
+                <div class="mt-2">
+                    {% if tasks %}
+                        <ul class="list-group">
+                            {% for task in tasks %}
+                            <li class="list-group-item task-item">
+                                <strong>Task Id:</strong> {{ task.task_id }}<br>
+                                <strong>Task Name:</strong> {{ task.task_name }}<br>
+                                <strong>Project Name:</strong> {{ task.project_name }}<br>
+                                <strong>Description:</strong> {{ task.description }}<br>
+                                <strong>Priority:</strong> {{ task.priority }}<br>
+                                <strong>Start Date:</strong> {{ task.start_date }}<br>
+                                <strong>Deadline:</strong> {{ task.deadline }}<br>
+                                <strong>Status:</strong> {{ task.status }}<br>
+                                
+                                <!-- Button to show/hide the upload form -->
+                                <button class="btn btn-sm btn-info mt-2" type="button" data-toggle="collapse" data-target="#uploadForm{{ task.task_id }}" aria-expanded="false" aria-controls="uploadForm{{ task.task_id }}">
+                                    Upload Task Document
+                                </button>
+
+                                <!-- Collapsible upload form -->
+                                <div class="collapse mt-2" id="uploadForm{{ task.task_id }}">
+                                    <form method="POST" action="{% url 'upload_document' task.task_id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <label for="document_{{ task.task_id }}">Select Document</label>
+                                            <input type="file" class="form-control" id="document_{{ task.task_id }}" name="document" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Upload</button>
+                                    </form>
+                                </div>
+
+                                <a href="{% url 'update_task_status' task.task_id %}" class="btn btn-sm btn-primary mt-2">Update Status</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>No tasks assigned.</p>
+                    {% endif %}
+                </div>
+                <!-- End of My Tasks Section -->
+
+            </div>
+        </div>
+        <!-- End of Task Management Card -->
+    </div>
+</div>
+
+<!-- Include jQuery and Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

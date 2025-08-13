@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Leave</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Manager Leave</h1>
+        <p>You are logged in as {{ request.session.user }}</p>
+
+        <!-- Display messages -->
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        <a href="{% url 'user_logout' %}" class="btn btn-danger">Logout</a>
+        <a href="{% url 'manager_apply_leave' %}" class="btn btn-danger">Apply Leave</a>
+        <a href="{% url 'manager_leave_history' %}" class="btn btn-danger">Leave History</a>
+
+    </div>
+ 
+   </body>
+</html>   

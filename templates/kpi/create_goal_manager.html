@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Manager Goal</title>
+    
+</head>
+<body>
+    <h2>Create Manager Goal</h2>
+
+    {% if message %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% endif %}
+
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="manager">Select Manager:</label>
+        <select name="manager" id="manager" required>
+            {% if managers %}
+                {% for manager in managers %}
+                    <option value="{{ manager.id }}">{{ manager.manager_name }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="">No Managers Available</option>
+            {% endif %}
+        </select><br><br>
+
+        <label for="goal_text">Goal Description:</label>
+        <input type="text" id="goal_text" name="goal_text" required><br><br>
+
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date" required><br><br>
+
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date" required><br><br>
+
+        <label for="is_completed">Is Completed:</label>
+        <input type="checkbox" id="is_completed" name="is_completed"><br><br>
+
+        <button type="submit" class="btn btn-primary">Submit</button><br><br>
+
+        <a href="{% url 'view_manager_goals'%}">view managers goals</a>
+    </form>
+</body>
+</html>

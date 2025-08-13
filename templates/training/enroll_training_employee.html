@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Available Training Programs</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: center;
+        }
+        .btn-enroll {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Available Training Programs</h2>
+
+    <table class="table table-bordered table-hover">
+        <thead class="thead-light">
+            <tr>
+                <th>PROGRAM NAME</th>
+                <th>PROGRAM DESCRIPTION</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for program in training_programs %}
+            <tr>
+                <td>{{ program.name }}</td>
+                <td>{{ program.description }}</td>
+                <td>
+                    <a href="{% url 'enroll_employee' program.program_id %}" class="btn btn-primary btn-enroll">Enroll</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">No training programs available at the moment.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

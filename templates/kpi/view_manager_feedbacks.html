@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Feedbacks</title>
+</head>
+<body>
+    <h2>Manager Feedbacks</h2>
+
+    {% if message %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% else %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>To Manager</th>
+                <th>Feedback Date</th>
+                <th>Comments</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for feedback in feedbacks %}
+                <tr>
+                    <td>{{ feedback.to_manager.manager_name }}</td>
+                    <td>{{ feedback.feedback_date }}</td>
+                    <td>{{ feedback.comments }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</body>
+</html>

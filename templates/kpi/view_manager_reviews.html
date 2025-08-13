@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Performance Reviews</title>
+</head>
+<body>
+    <h2>Manager Performance Reviews</h2>
+
+    {% if message %}
+        <div class="alert alert-warning">{{ message }}</div>
+    {% else %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Manager</th>
+                <th>Review Date</th>
+                <th>Comments</th>
+                <th>Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+                <tr>
+                    <td>{{ review.manager.manager_name }}</td>
+                    <td>{{ review.review_date }}</td>
+                    <td>{{ review.comments }}</td>
+                    <td>{{ review.score }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</body>
+</html>

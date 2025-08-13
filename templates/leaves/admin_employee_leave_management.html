@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Leave Management</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Welcome to the Employee Leave Management</h1>
+        
+        <a href="{% url 'user_logout' %}" class="btn btn-danger">Logout</a>
+        
+        <a href="{% url 'admin_employee_leave_status' %}" class="btn btn-danger">Employee Leave Status</a>
+        
+        <a href="{% url 'employee_leave_calendar' %}" class="btn btn-danger">Employee Leave calender</a>
+
+    </div>  
+    <div class="footer">
+        <a href="{% url 'custom_admin_home' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <!-- Include jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Receipt</title>
+</head>
+<body>
+    <h2>Payment Receipt</h2>
+    <p>Dear {{ party_name }},</p>
+    <p>We have received your payment for Invoice <strong>{{ invoice_number }}</strong>.</p>
+    <p><strong>Payment Details:</strong></p>
+    <ul>
+        <li>Payment In Number: {{ payment_in_number }}</li>
+        <li>Amount Paid: ₹{{ payment_amount }}</li>
+        <li>Date: {{ invoice_date }}</li>
+    </ul>
+    <p>Attached is your payment receipt for your reference.</p>
+    <p>Thank you for your business!</p>
+</body>
+</html>

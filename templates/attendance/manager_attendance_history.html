@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Attendance History</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Attendance History</h2>
+
+        {% if messages %}
+            <div class="alert alert-info" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="GET" action="{% url 'manager_attendance_history' %}">
+            <div class="form-group">
+                <label for="from_date">From Date</label>
+                <input type="date" id="from_date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
+            </div>
+            <div class="form-group">
+                <label for="to_date">To Date</label>
+                <input type="date" id="to_date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Filter History</button>
+        </form>
+
+        {% if attendance_records %}
+            <h3 class="mt-4">
+                {% if from_date and to_date %}
+                    Attendance Records from {{ from_date }} to {{ to_date }}
+                {% else %}
+                    All Attendance Records
+                {% endif %}
+            </h3>
+
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Shift</th>
+                        <th>Location</th>
+                        <th>Time In</th>
+                        <th>Time Out</th>
+                        <th>In Status</th>
+                        <th>Out Status</th>
+                        <th>Overtime</th>
+                        <th>Total Working Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.shift }}</td>
+                            <td>{{ record.location }}</td>
+                            <td>{{ record.time_in }}</td>
+                            <td>{{ record.time_out }}</td>
+                            <td>{{ record.in_status }}</td>
+                            <td>{{ record.out_status }}</td>
+                            <td>{{ record.overtime }}</td>
+                            <td>{{ record.total_working_hours }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No attendance records found{% if from_date and to_date %} for the selected dates{% endif %}.</p>
+        {% endif %}
+
+        <br>
+        <a href="{% url 'manager_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</body>
+</html>

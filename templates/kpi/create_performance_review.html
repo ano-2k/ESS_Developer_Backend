@@ -1,0 +1,23 @@
+<form method="post">
+    {% csrf_token %}
+    
+    <label for="member">Select Team Member:</label>
+    
+    <select class="form-control" id="employee_name" name="employee_name" required>
+        {% for team in teams %}
+        {% for member in team.members.all %}
+            <option value="{{ member.employee_name }}">{{ member.employee_name }}</option>
+        {% endfor %}
+        {% endfor %}             
+
+    </select>
+    <br><br>
+    
+    <label for="comments">Comments:</label>
+    <textarea name="comments" required></textarea><br><br>
+    <label for="score">Score:</label>
+    <input type="number" name="score" min="0" max="10" required><br><br>
+    <button type="submit">Submit Review</button><br><br>
+    <a href="{% url 'performance_review_list' %}">view_performance_reviews</a>
+
+</form>

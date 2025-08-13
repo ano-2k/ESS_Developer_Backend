@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Checkout Time</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Reset Checkout Time for {{ employee.employee_id }}</h1>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="checkout_time">Checkout Time (HH:MM:SS):</label>
+                <input type="text" class="form-control" id="checkout_time" name="checkout_time" placeholder="Enter new checkout time">
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="clear_checkout" name="clear_checkout">
+                <label class="form-check-label" for="clear_checkout">Clear Checkout Time</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <a href="{% url 'md_employee_reset_requests' %}" class="btn btn-secondary mt-3">Back to Reset Requests</a>
+    </div>
+
+    <!-- Include jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

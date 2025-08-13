@@ -1,0 +1,21 @@
+<form method="post">
+    {% csrf_token %}
+    <label for="from_manager_id">From Manager:</label>
+    <select name="from_manager_id" id="from_manager_id">
+        {% for manager in managers %}
+            <option value="{{ manager.manager_id }}">{{ manager.manager_name }}</option>
+        {% endfor %}
+    </select><br><br>
+    <label for="to_employee_id">To Employee:</label>
+    <select name="to_employee_id" id="to_employee_id">
+        {% for employee in employees %}
+            <option value="{{ employee.employee_id }}">{{ employee.employee_name }}</option>
+        {% endfor %}
+    </select><br><br>
+    <label for="comments">Comments:</label>
+    <textarea name="comments" required></textarea><br><br>
+    <button type="submit">Submit Feedback</button><br><br>
+    <a href="{% url 'feedback_list' %}">view feedback list</a>
+    
+
+</form>

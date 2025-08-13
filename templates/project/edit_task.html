@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit task</title>
+</head>
+<body>
+    <h1>Edit task</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="task_id">Task_Id:</label>
+        <input type="text" id="task_id" name="task_id" value="{{ task.task_id }}" required><br><br>
+        <label for="project_manager">Project Manager:</label>
+        <select  id="project_manager" name="project_manager" required>
+            {% for managers in manager %}
+                <option value="{{ managers.manager_name }}">{{ managers.manager_name }}</option>
+            {% endfor %}
+        </select><br><br>
+        <label for="Project_name">Project Name:</label>
+        <select  id="project_name" name="project_name" required>
+            {% for projects in project %}
+                <option value="{{ projects.name }}">{{ projects.name }}</option>
+            {% endfor %}
+        </select><br><br>
+        <label for="task_name">Task_Name:</label>
+        <input type="text" id="task_name" name="task_name" value="{{ task.task_name }}" required><br><br>
+        <label for="description">Description:</label>
+        <textarea id="description" name="task_description"value="{{ task.description }}"></textarea><br><br>
+        <label for="priority">Piority:</label>
+        <select class="form-control" id="priority" name="priority" required>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+        </select><br><br>
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="task_startdate" value="{{ task.task_startdate }}" required><br><br>
+        <label for="deadline">Deadline:</label>
+        <input type="date" id="deadline" name="task_deadline" value="{{ task.deadline }}" required><br><br>
+        
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>

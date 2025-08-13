@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    {% csrf_token %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPI Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}"> <!-- Link to your CSS file -->
+    <script src="{% static 'js/dashboard.js' %}"></script> <!-- Link to your JS file if needed -->
+</head>
+<body>
+    <!-- Navigation Bar -->
+     <h1>Welcome to KPI and Feedback System</h1>
+
+    <div class="container">
+        <h1>Employees</h1>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li><a href="{% url 'create_performance_review' %}" class="btn btn-primary">Create Performance Reviews Employees</a></li>
+            <li><a href="{% url 'create_goal' %}" class="btn btn-primary"> Create Goal Setting Employees</a></li>
+            <li><a href="{% url 'create_feedback' %}" class="btn btn-primary">Create Feedback System Employees</a></li>
+            
+        </ul>
+        <h1>My reviews</h1>
+        <ul class="nav nav-tabs" id="myTab" role="tablist"></ul>
+            <li><a href="{% url 'view_create_performance_review_manager' request.session.user %}" class="btn btn-primary">View Performance Reviews Manager</a></li>
+            <li><a href="{% url 'view_create_goal_manager' request.session.user %}" class="btn btn-primary">View Goal Setting Manager</a></li>
+            <li><a href="{% url 'view_create_feedback_manager' request.session.user %}" class="btn btn-primary">View Feedback System Manager</a></li>
+            
+            
+        </ul>
+
+        <h1>Feedback form</h1>
+        <a href="{% url 'feedback_form' %}">Feedback</a>
+
+        <h1>Performance chart</h1>
+        <a href="{% url 'performance_chart' request.session.user_id 'manager'%}">view performance</a>
+
+
+    </div>
+
+    
+
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; 2024 KPI Management System</p>
+    </footer>
+</body>
+</html>

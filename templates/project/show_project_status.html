@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Status</title>
+    </head>
+<body>
+    <h1>Project Status</h1>
+
+    <p>Project Name: {{ project.name }}</p>
+    <p>Project Manager: {{ project.project_manager }}</p>
+
+    <h2> Manager Tasks</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task_Name</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Start Date</th>
+                <th>Deadline</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.task_name }}</td>
+                <td>{{ task.description }}</td>
+                <td>{{ task.priority }}</td>
+                <td>{{ task.start_date }}</td>
+                <td>{{ task.deadline }}</td>
+                <td>
+                    {% if task.status == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif task.status == 'in_progress' %}
+                            <span class="badge badge-warning">In Progress</span>
+                        {% elif task.status == 'overdue' %}
+                            <span class="badge badge-danger">Overdue</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Not Started</span>
+                        {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <h2> Employee Tasks</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task_Name</th>
+                <th>Description</th>
+                <th>Employee</th>
+                <th>Deadline</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in emptasks %}
+            <tr>
+                <td>{{ task.task_name }}</td>
+                <td>{{ task.task_description }}</td>
+                <td>{{task.assigned_to}}</td>
+                <td>{{ task.deadline }}</td>
+                <td>
+                    {% if task.emp_taskstatus == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif task.emp_taskstatus == 'in_progress' %}
+                            <span class="badge badge-warning">In Progress</span>
+                        {% elif task.emp_taskstatus == 'overdue' %}
+                            <span class="badge badge-danger">Overdue</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Not Started</span>
+                        {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    </body>
+</html>

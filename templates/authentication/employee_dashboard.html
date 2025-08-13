@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employee Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+
+        <!-- Display messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <h1>Welcome to the Employee Dashboard</h1>
+        <p>You are logged in as {{ request.session.user }}</p>
+        <a href="{% url 'user_logout' %}" class="btn btn-danger">Logout</a>
+        <a href="{% url 'employee_leave' %}" class="btn btn-danger">Employee Leave</a>
+        <a href="{% url 'payroll_notification' %}" class="btn btn-danger">payroll </a>
+        <a href="{% url 'employee_chat' %}" class="btn btn-danger">Chat</a>
+        <!-- Attendance Button -->
+        <div class="mt-4">
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#attendanceSection" aria-expanded="false" aria-controls="attendanceSection">
+                Attendance
+            </button>
+            <div class="collapse" id="attendanceSection">
+                <div class="card card-body mt-2">
+                    <a href="{% url 'employee_attendance_form' %}" class="btn btn-info">Attendance Form</a>
+                    <a href="{% url 'employee_attendance_history' %}" class="btn btn-info mt-2">Attendance History</a>
+                    <a href="{% url 'employee_weekly_attendance_chart' %}" class="btn btn-info mt-2">Weekly Attendance Chart</a>
+                    <a href="{% url 'employee_monthly_attendance_chart' %}" class="btn btn-info mt-2">Monthly Attendance Chart</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class=" container mt-4">
+            <!-- emptask Button -->
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#emptaskSection" aria-expanded="true" aria-controls="emptaskSection">
+                My Tasks
+            </button>
+            
+            <!-- emptask Section -->
+            <div class="collapse" id="emptaskSection">
+                <div class="card card-body mt-2">
+        
+                    <!-- Show My Teams Button -->
+                    <a href="{% url 'view_my_emptask' %}" class="btn btn-info">
+                        View My Tasks
+                    </a>
+        
+                    <!-- My Teams Section -->
+                    <div class="mt-2">
+                        {% if emptask %}
+            <ul class="list-group mt-2">
+                {% for task in emptask %}
+                    <li class="list-group-item">
+                        <strong>Task ID:</strong>{{task.emptask_id}} <br>
+                        <strong>Team Name:</strong> {{ task.team_name }} <br>
+                        <strong>Project Name:</strong> {{ task.team_project_name }} <br>
+                        <strong>Assigned To:</strong> {{ task.assigned_to }} <br>
+                        <strong>Task Name:</strong> {{ task.task_name }} <br>
+                        <strong>Description:</strong> {{ task.task_description }} <br>
+                        <strong>Deadline:</strong> {{ task.deadline }} <br>
+                        <a href="{% url 'task_check_in' task.emptask_id 'employee' request.session.user_id %}"class="btn btn-sm btn-primary">Check In</a>
+                        <a href="{% url 'task_check_out' task.emptask_id 'employee' %}"class="btn btn-sm btn-primary">Check Out</a>
+                        <strong>Status:</strong> 
+                        {% if task.emp_taskstatus == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif task.emp_taskstatus == 'in_progress' %}
+                            <span class="badge badge-warning">In Progress</span>
+                        {% elif task.emp_taskstatus == 'overdue' %}
+                            <span class="badge badge-danger">Overdue</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Not Started</span>
+                        {% endif %} <br>
+                        <button class="btn btn-sm btn-info" type="button" data-toggle="collapse" data-target="#uploadForm{{ task.id }}" aria-expanded="false" aria-controls="uploadForm{{ task.id }}">
+                            Upload Task Document
+                        </button>
+                        
+                        <!-- Collapsible upload form -->
+                        <div class="collapse mt-2" id="uploadForm{{ task.id }}">
+                            <form method="POST" action="{% url 'upload_document_emp' task.id %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="document_{{ task.id }}">Select Document</label>
+                                    <input type="file" class="form-control" id="document_{{ task.id }}" name="document" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Upload</button>
+                            </form>
+                        </div>
+                        <a href="{% url 'update_emptask_status' task.task_name %}" class="btn btn-sm btn-primary">Update Status</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No tasks found.</p>
+        {% endif %}
+                    </div>
+                    <!-- End of My emptask -->
+        
+                </div>
+            </div>
+            <!-- End of emptask Section -->
+        </div>
+        
+        
+        
+        <div class="container mt-4">
+            <!-- Certification button that triggers the collapse and calls the certificate data -->
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#certificates-section" aria-expanded="false" aria-controls="certificates-section">
+                Certification
+            </button>
+            
+        
+            <!-- Certification section that will be toggled -->
+            <div id="certificates-section" class="collapse mt-3">
+                <h3><a href="{% url 'employee_dashboard_certificates' %}">Certifications</a></h3>
+        
+                <table class="table table-bordered mt-3">
+                    <thead>
+                        <tr>
+                            <th>Certificate Name</th>
+                            <th>Certification Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+        
+                    <tbody>
+                        {% for certificate in certificates %}
+                        <tr>
+                            <td>{{ certificate.certification_name }}</td>
+                            <td>{{ certificate.certification_date }}</td>
+                            <td><a href="{{ certificate.certification_file.url }}" download>Download Certificate</a></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">No certificates available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="container mt-4">
+        <a href="{% url 'enroll_training_employee' %}" class="btn btn-primary">Enroll in Training</a> 
+        </div>
+        
+        
+        <!--kpi updates-->
+        
+        <div class="container mt-4">
+        
+        <a href="{% url 'kpi_dashboard_employee' %}" class="btn btn-primary">KPI and Performance Feedback</a>
+        
+        </div>
+        
+        
+        <!-- employee Dashboard -->
+        <div class="container mt-4">
+            <a href="{% url 'view_employee_profile' request.session.user_id %}" class="btn btn-primary">Profile</a>
+        </div>
+        
+        
+        
+        
+        
+            <!-- Include jQuery and Bootstrap JS -->
+            <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        </body>
+        </html>
+        

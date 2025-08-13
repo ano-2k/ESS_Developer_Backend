@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        a {
+            text-decoration: none;
+            color: #4CAF50;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .empty-state {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .filter-form {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Document List</h1>
+    
+    <form method="GET" class="filter-form">
+        <label for="employee_id">Filter by Employee ID:</label>
+        <select name="employee_id" id="employee_id">
+            <option value="">All Employees</option>
+            {% for employee in employees %}
+                <option value="{{ employee.employee_id }}" {% if employee.employee_id == selected_employee_id %}selected{% endif %}>{{ employee.employee_id }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
+    {% if documents %}
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>User ID</th>
+            <th>Email</th>
+            <th>Uploaded At</th>
+            <th>Description</th>
+            <th>Aadhar Card</th>
+            <th>PAN Card</th>
+            <th>Bank Details</th>
+            <th>Previous Payslip</th>
+            <th>Experience Certificate</th>
+            <th>Degree Certificate</th>
+            <th>Update Documents</th>
+        </tr>
+        {% for document in documents %}
+        <tr>
+            <td>{{ document.id }}</td>
+            <td>{{ document.user_id }}</td>
+            <td>{{ document.email }}</td>
+            <td>{{ document.uploaded_at }}</td>
+            <td>{{ document.description }}</td>
+            <td>
+                {% if document.aadhar_card %}
+                    <a href="{{ document.aadhar_card.url }}" target="_blank">View</a> | 
+                    <a href="{{ document.aadhar_card.url }}" download>Download</a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+            <td>
+                {% if document.pan_card %}
+                    <a href="{{ document.pan_card.url }}" target="_blank">View</a> | 
+                    <a href="{{ document.pan_card.url }}" download>Download</a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+            <td>
+                {% if document.bank_details %}
+                    <a href="{{ document.bank_details.url }}" target="_blank">View</a> | 
+                    <a href="{{ document.bank_details.url }}" download>Download</a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+            <td>
+                {% if document.previous_payslip %}
+                    <a href="{{ document.previous_payslip.url }}" target="_blank">View</a> | 
+                    <a href="{{ document.previous_payslip.url }}" download>Download</a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+            <td>
+                {% if document.experience_certificate %}
+                    <a href="{{ document.experience_certificate.url }}" target="_blank">View</a> | 
+                    <a href="{{ document.experience_certificate.url }}" download>Download</a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+            <td>
+                {% if document.degree_certificate %}
+                    <a href="{{ document.degree_certificate.url }}" target="_blank">View</a> | 
+                    <a href="{{ document.degree_certificate.url }}" download>Download</a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'update_document' document.id %}" class="button">Update</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No documents uploaded yet. Click the button below to upload a new document.</p>
+    </div>
+    {% endif %}
+    
+    <div>
+        <a class="button" href="{% url 'upload_document' %}">Upload New Document</a>
+    </div>
+
+    <div>
+        {% if request.session.role == 'admin' %}
+           <a href="{% url 'custom_admin_home'  %}" class="btn btn-secondary">Back to Dashboard</a>
+        {% elif request.session.role == 'md' %}
+           <a href="{% url 'md_home'  %}" class="btn btn-secondary">Back to Dashboard</a>  
+        {% endif %}   
+    </div>
+</body>
+</html>

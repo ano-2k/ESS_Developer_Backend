@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Employee Time Tracking</title>
+</head>
+<body>
+    <h1>Employee Time Tracking</h1>
+    <h2>{{ employee.user.username }}</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Duration</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for time_tracking in time_trackings %}
+            <tr>
+                <td>{{ time_tracking.date }}</td>
+                <td>{{ time_tracking.start_time }}</td>
+                <td>{{ time_tracking.end_time }}</td>
+                <td>{{ time_tracking.end_time - time_tracking.start_time }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

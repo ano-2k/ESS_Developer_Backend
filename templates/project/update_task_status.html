@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Update Task Status</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container mt-4">
+    <h1>Update Task Status</h1>
+
+    <form method="post">
+      {% csrf_token %}
+      
+      <label for="status">Update Task Status:</label>
+      <select name="status" id="status">
+          <option value="not_started" {% if task.status == "not_started" %}selected{% endif %}>Not Started</option>
+          <option value="in_progress" {% if task.status == "in_progress" %}selected{% endif %}>In Progress</option>
+          <option value="completed" {% if task.status == "completed" %}selected{% endif %}>Completed</option>
+          <option value="overdue" {% if task.status == "overdue" %}selected{% endif %}>Overdue</option>
+      </select>
+  
+      <!-- Only show reason field if task is late -->
+      {% if task.is_late %}
+          <div>
+              <label for="completion_reason">Reason for Late Completion:</label>
+              <textarea name="completion_reason" id="completion_reason">{{ task.completion_reason }}</textarea>
+          </div>
+      {% endif %}
+  
+      <button type="submit">Update Status</button>
+  </form>
+  
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

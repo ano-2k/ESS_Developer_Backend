@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Shift</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Update Shift</h2>
+
+        <!-- Display success or error messages if needed -->
+        {% if messages %}
+            <div>
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form action="{% url 'md_update_shift' shift.id %}" method="POST">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="shift_number">Shift Number</label>
+                <input type="text" class="form-control" id="shift_number" name="shift_number" value="{{ shift.shift_number }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="shift_start_time">Shift Start Time</label>
+                <input type="time" class="form-control" id="shift_start_time" name="shift_start_time" value="{{ shift.shift_start_time }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="shift_end_time">Shift End Time</label>
+                <input type="time" class="form-control" id="shift_end_time" name="shift_end_time" value="{{ shift.shift_end_time }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update Shift</button>
+            <a href="{% url 'md_home' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

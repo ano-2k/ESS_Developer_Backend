@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Employee Leave Status</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            background-color: #e9ecef;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            margin-top: 30px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 28px;
+        }
+        .alert {
+            margin-bottom: 20px;
+        }
+        .notification-dropdown {
+            position: absolute;
+            top: 60px;
+            right: 15px;
+            background: white;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            border-radius: 8px;
+        }
+        .notification-dropdown.show {
+            display: block;
+        }
+        .notification-dropdown ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .notification-dropdown li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            transition: background-color 0.2s;
+        }
+        .notification-dropdown li:hover {
+            background-color: #f1f1f1;
+        }
+        .btn-link {
+            color: #dc3545; /* Bootstrap's danger color */
+            text-decoration: none;
+        }
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+        
+        .form-control {
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+        }
+        .table {
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .table th, .table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            border-radius: 5px;
+        }
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .modal-content {
+            border-radius: 12px;
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .pagination .page-link {
+            border-radius: 5px;
+        }
+        .form-row > .form-group {
+            margin-bottom: 15px;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: #f9f9f9;
+        }
+        .table-striped tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+    <script>
+        function validateFilterDates() {
+            const fromDate = new Date(document.getElementById('from_date').value);
+            const toDate = new Date(document.getElementById('to_date').value);
+            if (fromDate > toDate) {
+                alert("From date must be before or equal to To date.");
+                return false;
+            }
+            return true;
+        }
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Leave Status</h1>
+
+        <!-- Display Success or Error Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Notification Action Bar -->
+        <div class="action-bar mb-3">
+            <button class="btn btn-info" onclick="toggleNotifications()">
+                <i class="fas fa-bell"></i> Notifications
+            </button>
+        </div>
+
+        <div id="notificationDropdown" class="notification-dropdown">
+            <h2 class="h6">Notifications</h2>
+            {% if notifications %}
+                <ul>
+                    {% for notification in notifications %}
+                        <li>
+                            <strong>{{ notification.user }}:</strong> {{ notification.message }} 
+                            <small class="text-muted">{{ notification.date }} {{ notification.time|date:"h:i A" }}</small>
+                            <form method="POST" action="{% url 'cancel_notification' notification.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link btn-sm text-danger">Cancel</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="no-notifications">No notifications found.</div>
+            {% endif %}
+        </div>
+        
+
+        <!-- Search and Filter Form -->
+        <form method="GET" action="{% url 'employee_leave_status' %}" class="mb-3" onsubmit="return validateFilterDates();">
+            <div class="form-row">
+                <div class="form-group col-md-3">
+                    <label for="search_user">Search by User</label>
+                    <input type="text" id="search_user_id" name="search_user_id" class="form-control" placeholder="Enter user name" value="{{ search_user }}">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="search_status">Filter by Status</label>
+                    <select id="search_status" name="search_status" class="form-control">
+                        <option value="">All</option>
+                        <option value="pending" {% if search_status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if search_status == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="rejected" {% if search_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="from_date">From Date</label>
+                    <input type="date" id="from_date" name="from_date" class="form-control" value="{{ from_date }}">
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="to_date">To Date</label>
+                    <input type="date" id="to_date" name="to_date" class="form-control" value="{{ to_date }}">
+                </div>
+                <div class="form-group col-md-12">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="btn btn-primary btn-block">Search</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Display Leave Balances -->
+        <h2>Leave Balances</h2>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Total Leave Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for balance in leave_balances %}
+                    <tr>
+                        <td>{{ balance.user }}</td>
+                        <td>{{ balance.total_leave_days }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2">No leave balances found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Display Leave Requests -->
+        <h2>Leave Requests</h2>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Leave Type</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Notification Sent</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave_request in leave_requests %}
+                    <tr>
+                        <td>{{ leave_request.user }}</td>
+                        <td>{{ leave_request.user_id }}</td>
+                        <td>{{ leave_request.email }}</td>
+                        <td>{{ leave_request.start_date }}</td>
+                        <td>{{ leave_request.end_date }}</td>
+                        <td>{{ leave_request.leave_type }}</td>
+                        <td>{{ leave_request.reason }}</td>
+                        <td>{{ leave_request.status }}</td>
+                        <td>{{ leave_request.notification_sent }}</td>
+                        <td>
+                            <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#approveModal{{ leave_request.id }}">Approve</button>
+                            <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rejectModal{{ leave_request.id }}">Reject</button>
+                        </td>
+                    </tr>
+
+                    <!-- Approve Modal -->
+                    <div class="modal fade" id="approveModal{{ leave_request.id }}" tabindex="-1" role="dialog" aria-labelledby="approveModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="approveModalLabel">Approve Leave Request</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form method="POST" action="{% url 'employee_leave_status' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="leave_id" value="{{ leave_request.id }}">
+                                    <input type="hidden" name="status" value="Approved">
+                                    <div class="modal-body">
+                                        Are you sure you want to approve this leave request?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Approve</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reject Modal -->
+                    <div class="modal fade" id="rejectModal{{ leave_request.id }}" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="rejectModalLabel">Reject Leave Request</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form method="POST" action="{% url 'employee_leave_status' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="leave_id" value="{{ leave_request.id }}">
+                                    <input type="hidden" name="status" value="Rejected">
+                                    <div class="modal-body">
+                                        Are you sure you want to reject this leave request?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-danger">Reject</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <tr>
+                        <td colspan="10">No leave requests found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&search_user_id={{ search_user_id }}&search_status={{ search_status }}&from_date={{ from_date }}&to_date={{ to_date }}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search_user_id={{ search_user_id }}&search_status={{ search_status }}&from_date={{ from_date }}&to_date={{ to_date }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}&search_user_id={{ search_user_id }}&search_status={{ search_status }}&from_date={{ from_date }}&to_date={{ to_date }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&search_user_id={{ search_user_id }}&search_status={{ search_status }}&from_date={{ from_date }}&to_date={{ to_date }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&search_user_id={{ search_user_id }}&search_status={{ search_status }}&from_date={{ from_date }}&to_date={{ to_date }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div class="footer">
+            <a href="{% url 'employee_leave_management' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

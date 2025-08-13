@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process Payroll</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #eef2f3;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #responseMessage {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        .loading {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .form-group label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="number"], input[type="month"] {
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 10px;
+            width: 100%;
+        }
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        input[type="submit"]:hover {
+            background-color: #218838;
+        }
+        #payslip {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            background: #f8f9fa;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Process Payroll</h1>
+        
+        <form id="payrollForm" method="POST" action="{% url 'process_payroll' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="employee_id">Select Employee:</label>
+                <select class="form-control" id="employee_id" name="employee_id" required>
+                    {% for employee in employees %}
+                        <option value="{{ employee.employee_id }}">{{ employee.employee_id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="month">Select Month:</label>
+                <input type="month" id="month" name="month" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="base_salary">Monthly Salary:</label>
+                <input type="number" id="base_salary" name="base_salary" class="form-control" required>
+            </div>
+
+            <input type="submit" value="Submit Payroll">
+        </form>
+
+        <div id="responseMessage"></div>
+        <div id="payslip"></div>
+        <div>
+            <a href="{% url 'payroll_manage' %}" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#payrollForm').on('submit', function(event) {
+                event.preventDefault();
+                $('#responseMessage').text('');
+                $('#payslip').hide();
+
+                $('#responseMessage').text('Processing payroll...').addClass('loading');
+
+                $.ajax({
+                    type: 'POST',
+                    url: $(this).attr('action'),
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        $('#responseMessage').removeClass('loading');
+                        if (response.success) {
+                            $('#responseMessage').css('color', 'green').text('Payroll processed successfully!');
+                            $('#payslip').html(response.payslip_html).show();
+                        } else {
+                            $('#responseMessage').css('color', 'red').text(response.message || 'Error processing payroll. Please try again.');
+                        }
+                    },
+                    error: function() {
+                        $('#responseMessage').removeClass('loading');
+                        $('#responseMessage').css('color', 'red').text('An error occurred. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

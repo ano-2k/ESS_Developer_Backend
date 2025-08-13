@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Leave Policies</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        form {
+            display: inline;
+        }
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            text-align: center;
+        }
+        li {
+            margin: 10px 0;
+            color: #d9534f; /* Bootstrap danger color */
+        }
+    </style>
+</head>
+<body>
+    <h1>Manager Leave Policies</h1>
+
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Department</th>
+                <th>Role</th>
+                <th>Leave Balance</th>
+                <th>Update Leave Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in leave_data %}
+                <tr>
+                    <td>{{ item.user }}</td>
+                    <td>{{ item.department }}</td>
+                    <td>{{ item.role }}</td>
+                    <td>{{ item.leave_balance.total_leave_days }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'update_manager_leave_balance' item.leave_balance.user %}">
+                            {% csrf_token %}
+                            <input type="number" name="leave_balance" value="{{ item.leave_balance.total_leave_days }}" required>
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'custom_admin_home' %}" class="btn btn-secondary">Back to Dashboard</a>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!-- templates/show_employee_tasks.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Team's Assigned Tasks</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>My Team's Tasks</h2>
+
+        <div class="card card-body">
+            {% if emptask %}
+            <ul class="list-group mt-2">
+                {% for task in emptask %}
+                    <li class="list-group-item">
+                        <strong>Team Name:</strong> {{ task.team_name }} <br>
+                        <strong>Project Name:</strong> {{ task.team_project_name }} <br>
+                        <strong>Assigned To:</strong> {{ task.assigned_to }} <br>
+                        <strong>Task Name:</strong> {{ task.task_name }} <br>
+                        <strong>Description:</strong> {{ task.task_description }} <br>
+                        <strong>Deadline:</strong> {{ task.deadline }} <br>
+                        <strong>Status:</strong> 
+                        {% if task.emp_taskstatus == 'completed' %}
+                            <span class="badge badge-success">Completed</span>
+                        {% elif task.emp_taskstatus == 'in_progress' %}
+                            <span class="badge badge-warning">In Progress</span>
+                        {% elif task.emp_taskstatus == 'overdue' %}
+                            <span class="badge badge-danger">Overdue</span>
+                        {% else %}
+                            <span class="badge badge-secondary">Not Started</span>
+                        {% endif %} <br>
+                        <a href="{% url 'delete_emptask' task.task_name %}" class="btn btn-sm btn-primary">Delete Task</a>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+                <p>No tasks found.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

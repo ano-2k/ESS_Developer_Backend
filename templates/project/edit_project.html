@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Project</title>
+</head>
+<body>
+    <h1>Edit Project</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="id">Id:</label>
+        <input type="text" id="id" name="project_id" value="{{ project.project_id }}" required><br><br>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="project_name" value="{{ project.name }}" required><br><br>
+        <label for="description">Description:</label>
+        <textarea id="description" name="project_description"value="{{ project.description }}"></textarea><br><br>
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="project_start_date" value="{{ project.start_date }}" required><br><br>
+        <label for="deadline">Deadline:</label>
+        <input type="date" id="deadline" name="project_deadline" value="{{ project.deadline }}" required><br><br>
+        <label for="project_manager">Project Manager</label>
+        <select  id="project_manager" name="project_manager" required>
+            {% for managers in manager %}
+                <option value="{{ managers.manager_name }}">{{ managers.manager_name }}</option>
+            {% endfor %}
+        </select><br><br>
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>

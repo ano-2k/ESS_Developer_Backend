@@ -1,0 +1,17 @@
+<h1>Performance Reviews </h1>
+<table>
+    <tr>
+        <th>Manager</th>
+        <th>Review Date</th>
+        <th>Comments</th>
+        <th>Score</th>
+    </tr>
+    {% for review in reviews %}
+    <tr>
+        <td>{{ review.manager.manager_name }}</td>
+        <td>{{ review.review_date }}</td>
+        <td>{{ review.comments }}</td>
+        <td>{{ review.score }}</td>
+    </tr>
+    {% endfor %}
+</table>

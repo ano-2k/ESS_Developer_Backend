@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Profile</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #343a40;
+        }
+        .form-group label {
+            font-weight: bold;
+        }
+        .btn-primary, .btn-secondary {
+            width: 100%;
+        }
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h2>Update Profile</h2>
+    <form method="POST" action="{% url 'update_employee_profile' employee.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="employeeName">Name:</label>
+            <input type="text" class="form-control" id="employeeName" name="employee_name" value="{{ employee.employee_name }}" required>
+        </div>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ employee.username }}" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ employee.email }}" required>
+        </div>
+        <div class="form-group">
+            <label for="gender">Gender:</label>
+            <select class="form-control" id="gender" name="gender" required>
+                <option value="Male" {% if employee.gender == "Male" %}selected{% endif %}>Male</option>
+                <option value="Female" {% if employee.gender == "Female" %}selected{% endif %}>Female</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="employeeImage">Employee Image:</label>
+            <input type="file" class="form-control" id="employeeImage" name="employee_image">
+        </div>
+        <div class="form-group">
+            <label for="employeeDOB">Date of Birth:</label>
+            <input type="date" class="form-control" id="employeeDOB" name="dob" value="{{ employee.dob }}" required>
+        </div>
+        <div class="form-group">
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="text" class="form-control" id="phoneNumber" name="phone_number" value="{{ employee.phone_number }}">
+        </div>
+        <div class="form-group">
+            <label for="address">Address:</label>
+            <textarea class="form-control" id="address" name="address">{{ employee.address }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="city">City:</label>
+            <input type="text" class="form-control" id="city" name="city" value="{{ employee.city }}">
+        </div>
+        <div class="form-group">
+            <label for="country">Country:</label>
+            <input type="text" class="form-control" id="country" name="country" value="{{ employee.country }}">
+        </div>
+        <div class="form-group">
+            <label for="pincode">Pincode:</label>
+            <input type="text" class="form-control" id="pincode" name="pincode" value="{{ employee.pincode }}">
+        </div>
+        <div class="form-group">
+            <label for="state">State:</label>
+            <input type="text" class="form-control" id="state" name="state" value="{{ employee.state }}">
+        </div>
+        <div class="form-group">
+            <label for="linkedinProfile">LinkedIn Profile Link:</label>
+            <input type="url" class="form-control" id="linkedinProfile" name="linkedin_profile_link" value="{{ employee.linkedin_profile_link }}">
+        </div>
+
+        <div class="footer-link">
+            <a href="{% url 'forgot_password_employee' %}">Forgot Password?</a>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back();">Go Back</button>
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

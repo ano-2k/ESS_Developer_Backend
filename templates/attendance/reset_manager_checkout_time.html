@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Manager Checkout Time</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Reset Checkout Time for Manager {{ manager_id }}</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="checkout_time">Checkout Time (HH:MM:SS):</label>
+                <input type="text" class="form-control" id="checkout_time" name="checkout_time" placeholder="Enter new checkout time">
+            </div>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="clear_checkout" name="clear_checkout">
+                <label class="form-check-label" for="clear_checkout">Clear Checkout Time</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <a href="{% url 'admin_manager_reset_requests' %}" class="btn btn-secondary mt-3">Back to Requests</a>
+    </div>
+</body>
+</html>

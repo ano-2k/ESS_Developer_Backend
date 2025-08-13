@@ -1,0 +1,15 @@
+<h1>Feedback for Managers</h1>
+<table>
+    <tr>
+        <th>To Managers</th>
+        <th>Date</th>
+        <th>Comments</th>
+    </tr>
+    {% for feedback in feedbacks %}
+    <tr>
+        <td>{{ feedback.to_manager.manager_name }}</td>
+        <td>{{ feedback.feedback_date }}</td>
+        <td>{{ feedback.comments }}</td>
+    </tr>
+    {% endfor %}
+</table>

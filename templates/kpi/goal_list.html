@@ -1,0 +1,19 @@
+<h1>Goals</h1>
+<table>
+    <tr>
+        <th>Employee</th>
+        <th>Goal</th>
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Status</th>
+    </tr>
+    {% for goal in goals %}
+    <tr>
+        <td>{{ goal.employee.employee_name }}</td>
+        <td>{{ goal.goal_text }}</td>
+        <td>{{ goal.start_date }}</td>
+        <td>{{ goal.end_date }}</td>
+        <td>{{ goal.is_completed|yesno:"Completed,Not Completed" }}</td>
+    </tr>
+    {% endfor %}
+</table>

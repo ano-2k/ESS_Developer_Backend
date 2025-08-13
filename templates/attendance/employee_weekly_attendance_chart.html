@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weekly Attendance Chart</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            width: 60%;  /* Adjust the width as needed */
+            margin: 0 auto;  /* Center the chart */
+        }
+        canvas {
+            max-width: 100%;  /* Ensure it scales within the container */
+            height: 300px;    /* Adjust the height to make the chart smaller */
+        }
+        .navigation-buttons {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Weekly Attendance Chart for {{ month }}</h2>
+        <div class="chart-container">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+
+        <div class="navigation-buttons">
+            <form method="GET" style="display: inline;">
+                <input type="hidden" name="week_offset" value="{{ week_offset|add:-1 }}">  
+                <button type="submit" class="btn btn-secondary">Previous</button>
+            </form>
+            <form method="GET" style="display: inline;">
+                <input type="hidden" name="week_offset" value="{{ week_offset|add:1 }}">  
+                <button type="submit" class="btn btn-secondary">Next</button>
+            </form>
+            <a href="{% url 'employee_dashboard' %}" class="btn btn-primary">Back to Dashboard</a>   
+
+            <div class="totals">
+                <p>Total Working Hours: {{ total_hours }} hrs</p>
+                <p>Total Overtime: {{ total_overtime }} hrs</p>
+            </div>            
+        </div>
+    </div>
+    <script>
+        var ctx = document.getElementById('attendanceChart').getContext('2d');
+        var attendanceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ labels|safe }},
+                datasets: [{
+                    label: 'Total Working Hours',
+                    data: {{ data|safe }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Leave Days',
+                    data: {{ leave_data|safe }},
+                    backgroundColor: 'rgba(255, 99, 132, 1)',  // Full red color for leave days
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: Math.max(8, ...{{ data|safe }}) + 2  // Adjust max value to include daily working hours
+                    }
+                }
+            }
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
