@@ -98,11 +98,11 @@ DATABASES = {
 
     'default': {
          'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'personal_aug13ess',
-        'USER': 'root',
-        'PASSWORD':'root',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'NAME': 'defaultdb',
+        'USER': 'avnadmin',
+        'PASSWORD':'AVNS_LuWXHmgGfdMCnLFl530',
+        'HOST': 'mysql-3af8b8a0-ess-be14-7c79.j.aivencloud.com',
+        'PORT': '19368',
 
     }
     

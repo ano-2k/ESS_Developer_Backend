@@ -4,7 +4,7 @@ arabic-reshaper==3.0.0
 asgiref==3.8.1
 asn1crypto==1.5.1
 bcrypt==4.1.3
-blis==1.2.0
+blis==1.3.0
 brcode==1.2
 cachetools==5.5.0
 catalogue==2.0.10
