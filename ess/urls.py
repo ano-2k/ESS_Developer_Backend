@@ -40,7 +40,7 @@ urlpatterns = [
     # path('credit/',include('Credit_Note.urls')),
     # path('salesref/',include("Sales_Person.urls")),
     # path('armanagement/', include('armanagement.urls')), 
-
+    path('admin/', admin.site.urls), 
      path('', include('authentication.urls')),
     path('', include('attendance.urls')),
     path('', include('leaves.urls')),
