@@ -11,7 +11,56 @@ from django.core.exceptions import ValidationError
 from authentication.models import Admin, ManagingDirector, Manager, Employee, Supervisor,Hr,Ar
 from django.contrib.auth.hashers import make_password
 
+from .models import SuperAdmin
+class SuperAdminSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
 
+    class Meta:
+        model = SuperAdmin
+        fields = ['id', 'username', 'user_id', 'email', 'password']
+
+    def validate_username(self, value):
+        if self.instance:
+            if SuperAdmin.objects.exclude(pk=self.instance.pk).filter(username=value).exists():
+                raise serializers.ValidationError("A super admin with this username already exists.")
+        else:
+            if SuperAdmin.objects.filter(username=value).exists():
+                raise serializers.ValidationError("A super admin with this username already exists.")
+        return value
+
+    def validate_email(self, value):
+        if self.instance:
+            if SuperAdmin.objects.exclude(pk=self.instance.pk).filter(email=value).exists():
+                raise serializers.ValidationError("A super admin with this email already exists.")
+        else:
+            if SuperAdmin.objects.filter(email=value).exists():
+                raise serializers.ValidationError("A super admin with this email already exists.")
+        return value
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except ValidationError as e:
+            raise serializers.ValidationError(e.messages)
+        return value
+
+    def create(self, validated_data):
+        raw_password = validated_data.pop('password')
+        self.validate_password(raw_password)
+        hashed_password = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        validated_data['password'] = hashed_password
+        return SuperAdmin.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            raw_password = validated_data.pop('password')
+            hashed_password = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            validated_data['password'] = hashed_password
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+    
 
 class AdminSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

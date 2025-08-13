@@ -1,31 +1,19 @@
 import os
 import django
+import bcrypt
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ess.settings')
 django.setup()
 
-from django.contrib.auth.models import User
+from authentication.models import SuperAdmin
 
 username = 'superadmin'
+user_id = 'superadmin'
 email = 'superadmin@company.com'
-password = 'superadmin'
-first_name = 'Super'
-last_name = 'Admin'
+raw_password = 'superadmin'
 
-if User.objects.filter(username=username).exists():
-    print(f"Super Admin '{username}' already exists!")
-    existing_user = User.objects.get(username=username)
-    print(f"Email: {existing_user.email}")
-    print(f"Is Superuser: {existing_user.is_superuser}")
-    print(f"Is Active: {existing_user.is_active}")
-else:
-    superuser = User.objects.create_superuser(
-        username=username,
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name
-    )
-    print("Super Admin created successfully!")
-    print(f"Username: {username}")
-    print(f"Email: {email}")
+hashed_password = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+superadmin_user = SuperAdmin(username=username, user_id=user_id, email=email, password=hashed_password)
+superadmin_user.save()
+print("SuperAdmin created successfully")

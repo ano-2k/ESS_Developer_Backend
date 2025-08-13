@@ -13,7 +13,7 @@ from leaves.models import ArLeaveRequest, HrLeaveRequest, LeaveBalance, ManagerL
 from leaves.serializers import LeaveBalanceSerializer,HrLeaveBalanceSerializer,SupervisorLeaveBalanceSerializer
 
 # from projectmanagement.models import Project, Role, Task, Team
-from .models import Admin, Ar, Hr,Manager, Employee, ManagingDirector, Supervisor
+from .models import Admin, Ar, Hr,Manager, Employee, ManagingDirector, Supervisor,SuperAdmin
 # from attendance.models import Attendance, ResetRequest
 from django.contrib.auth import authenticate, login
 # from django.contrib.auth.hashers import check_password
@@ -39,7 +39,7 @@ from rest_framework.response import Response
 from .models import Manager, Employee, Admin, ManagingDirector
 from .serializers import ArSerializer, HrSerializer, LoginSerializer, SupervisorSerializer  # Import your serializer
 import bcrypt
-from authentication.serializers import AdminSerializer, ManagingDirectorSerializer, ManagerSerializer, EmployeeSerializer, SupervisorSerializer
+from authentication.serializers import AdminSerializer, ManagingDirectorSerializer, ManagerSerializer, EmployeeSerializer, SupervisorSerializer,SuperAdminSerializer
 
 @api_view(['GET'])
 def view_manager_by_id(request, id):
@@ -3903,6 +3903,7 @@ def common_users_login(request):
 
             # Fallback models and their roles
             user_roles = [
+                {'model': SuperAdmin, 'role': 'superadmin', 'id_field': 'user_id'},
                 {'model': Manager, 'role': 'manager', 'id_field': 'manager_id'},
                 {'model': Admin, 'role': 'admin', 'id_field': 'user_id'},
                 {'model': Ar, 'role': 'ar', 'id_field': 'ar_id'},
@@ -3983,6 +3984,7 @@ def common_users_login(request):
 @api_view(['GET'])
 def user_details(request):
     try:
+        superadmins = SuperAdmin.objects.all()
         admins = Admin.objects.all()
         managers = Manager.objects.all()
         ars = Ar.objects.all()
@@ -3993,6 +3995,7 @@ def user_details(request):
         hrs = User.objects.filter(designation='Human Resources')
 
         data = {
+            'superadmins' : SuperAdminSerializer(superadmins, many=True).data,
             'admins': AdminSerializer(admins, many=True).data,
             'managers': ManagerSerializer(managers, many=True).data,
             'ars': ArSerializer(ars, many=True).data,
