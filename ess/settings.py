@@ -18,7 +18,9 @@ DEBUG = True
 ALLOWED_HOSTS = [
     "ess-backend-fg6m.onrender.com",
     "localhost",
-    "127.0.0.1"
+    "127.0.0.1",
+    "ess-personalbe.onrender.com"
+    
 ]
 
 # Installed apps
