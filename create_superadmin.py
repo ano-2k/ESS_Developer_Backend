@@ -26,3 +26,6 @@ else:
         first_name=first_name,
         last_name=last_name
     )
+    print("Super Admin created successfully!")
+    print(f"Username: {username}")
+    print(f"Email: {email}")
