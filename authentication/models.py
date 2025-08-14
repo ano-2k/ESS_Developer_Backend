@@ -9,7 +9,7 @@ class SuperAdmin(models.Model):
     user_id = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
-
+    features = models.JSONField(default=list, blank=True)
     def set_password(self, raw_password):
         self.password = make_password(raw_password)
         self.save(update_fields=['password'])

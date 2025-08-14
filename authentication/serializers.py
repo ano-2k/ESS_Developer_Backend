@@ -17,7 +17,7 @@ class SuperAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SuperAdmin
-        fields = ['id', 'username', 'user_id', 'email', 'password']
+        fields = ['id', 'username', 'user_id', 'email', 'password','features']
 
     def validate_username(self, value):
         if self.instance:

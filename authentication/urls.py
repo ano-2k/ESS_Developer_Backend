@@ -199,6 +199,10 @@ urlpatterns = [
       path('user/user-dashboard/<str:user_id>/', views.user_dashboard, name='user_dashboard'), #combined view for emp,sup,hr dashboard
       path('user/<str:user_id>/verify_team_leader/', views.verify_team_leader, name='verify_team_leader'),
       
+  # Super Admin
+  
+     path('api/superadmin/<str:user_id>/superadmin-features/', views.get_superadmin_features, name='get_superadmin_features'),
+     path('api/superadmin/<str:user_id>/update-superadmin-features/', views.update_superadmin_features, name='update_superadmin_features'),
 
 
       

@@ -36,7 +36,7 @@ def index(request):
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Manager, Employee, Admin, ManagingDirector
+from .models import Manager, Employee, Admin, ManagingDirector,SuperAdmin
 from .serializers import ArSerializer, HrSerializer, LoginSerializer, SupervisorSerializer  # Import your serializer
 import bcrypt
 from authentication.serializers import AdminSerializer, ManagingDirectorSerializer, ManagerSerializer, EmployeeSerializer, SupervisorSerializer,SuperAdminSerializer
@@ -4190,3 +4190,33 @@ def user_dashboard(request, user_id):
 
     except User.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+#Aug 14
+
+@api_view(['GET'])
+def get_superadmin_features(request, user_id):
+    try:
+        superadmin = get_object_or_404(SuperAdmin, user_id=user_id)
+        return Response({
+            'user_id': superadmin.user_id,
+            'features': superadmin.features
+        }, status=status.HTTP_200_OK)
+    except SuperAdmin.DoesNotExist:
+        return Response({'error': 'SuperAdmin not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['PATCH'])
+def update_superadmin_features(request, user_id):
+    try:
+        superadmin = get_object_or_404(SuperAdmin, user_id=user_id)
+        features = request.data.get('features', [])
+        superadmin.features = features
+        superadmin.save()
+        return Response({
+            'user_id': superadmin.user_id,
+            'features': superadmin.features
+        }, status=status.HTTP_200_OK)
+    except SuperAdmin.DoesNotExist:
+        return Response({'error': 'SuperAdmin not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
