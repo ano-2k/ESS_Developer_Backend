@@ -8538,7 +8538,7 @@ def check_in_employee_with_auto_leave(request):
 
 
 
-
+# August 22 New FE Superadmin Attendance 
 @api_view(['GET'])
 def all_user_attendance_history(request):
     try:
@@ -8623,6 +8623,7 @@ def all_user_attendance_history(request):
                     'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
                     'out_status': record.out_status,
                     'overtime': overtime,
+                    'location': record.location.location_name if record.location else None
                 })
 
             leave_records = []
