@@ -8538,7 +8538,134 @@ def check_in_employee_with_auto_leave(request):
 
 
 
-# August 22 New FE Superadmin Attendance 
+# August 22 before  New FE Superadmin Attendance 
+# @api_view(['GET'])
+# def all_user_attendance_history(request):
+#     try:
+#         from_date = request.query_params.get('from_date')
+#         to_date = request.query_params.get('to_date')
+
+#         if from_date and to_date:
+#             try:
+#                 from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+#                 to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+#                 if from_date > to_date:
+#                     return Response({'error': 'From date cannot be after to date.'}, status=status.HTTP_400_BAD_REQUEST)
+#             except ValueError:
+#                 return Response({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             from_date = None
+#             to_date = None
+
+#         users = User.objects.all().select_related('shift')
+#         all_records = []
+
+#         for user in users:
+#             shift = user.shift
+#             shift_start = shift.shift_start_time if shift else None
+#             shift_end = shift.shift_end_time if shift else None
+
+#             attendance_query = Attendance.objects.filter(user=user).select_related('shift', 'location')
+
+#             # Choose the right leave request model
+#             if user.designation == 'Employee':
+#                 leave_query = LeaveRequest.objects.filter(user=user, status='approved')
+#             elif user.designation == 'Supervisor':
+#                 leave_query = SupervisorLeaveRequest.objects.filter(user=user, status='approved')
+#             elif user.designation == 'Human Resources':
+#                 leave_query = HrLeaveRequest.objects.filter(user=user, status='approved')
+#             else:
+#                 leave_query = []
+
+#             if from_date and to_date:
+#                 attendance_query = attendance_query.filter(date__range=[from_date, to_date])
+#                 leave_query = leave_query.filter(Q(start_date__lte=to_date) & Q(end_date__gte=from_date))
+
+#             attendance_records = []
+#             for record in attendance_query:
+#                 reset_request = ResetRequest.objects.filter(user=user, date=record.date).order_by('-created_at').first()
+
+#                 overtime = "N/A"
+#                 if shift_end and record.time_out and record.time_in:
+#                     shift_end_datetime = datetime.combine(record.date, shift_end)
+#                     time_out_datetime = datetime.combine(record.date, record.time_out)
+#                     if time_out_datetime > shift_end_datetime:
+#                         overtime_delta = time_out_datetime - shift_end_datetime
+#                         total_seconds = int(overtime_delta.total_seconds())
+#                         hours = total_seconds // 3600
+#                         minutes = (total_seconds % 3600) // 60
+#                         seconds = total_seconds % 60
+#                         overtime = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+#                 total_working_hours = record.total_working_hours
+#                 if record.time_in and record.time_out:
+#                     time_in_datetime = datetime.combine(record.date, record.time_in)
+#                     time_out_datetime = datetime.combine(record.date, record.time_out)
+#                     if time_out_datetime >= time_in_datetime:
+#                         working_hours_delta = time_out_datetime - time_in_datetime
+#                         total_seconds = int(working_hours_delta.total_seconds())
+#                         hours = total_seconds // 3600
+#                         minutes = (total_seconds % 3600) // 60
+#                         seconds = total_seconds % 60
+#                         total_working_hours = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+#                 attendance_records.append({
+#                     'user_id': user.user_id,
+#                     'user_name': user.user_name,
+#                     'designation': user.designation,
+#                     'date': record.date.strftime('%Y-%m-%d'),
+#                     'type': 'attendance',
+#                     'time_in': record.time_in.strftime('%H:%M:%S') if record.time_in else None,
+#                     'time_out': record.time_out.strftime('%H:%M:%S') if record.time_out else None,
+#                     'total_working_hours': total_working_hours,
+#                     'reset_status': reset_request.status if reset_request else "No Request",
+#                     'shift_start_time': shift_start.strftime('%H:%M:%S') if shift_start else None,
+#                     'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
+#                     'out_status': record.out_status,
+#                     'overtime': overtime,
+#                     'location': record.location.location_name if record.location else None
+#                 })
+
+#             leave_records = []
+#             for leave in leave_query:
+#                 leave_days = (leave.end_date - leave.start_date).days + 1
+#                 for i in range(leave_days):
+#                     leave_date = leave.start_date + timedelta(days=i)
+#                     if from_date and to_date and not (from_date <= leave_date <= to_date):
+#                         continue
+#                     leave_records.append({
+#                         'user_id': user.user_id,
+#                         'user_name': user.user_name,
+#                         'designation': user.designation,
+#                         'date': leave_date.strftime('%Y-%m-%d'),
+#                         'type': 'leave',
+#                         'time_in': None,
+#                         'time_out': None,
+#                         'total_working_hours': "00:00:00",
+#                         'reset_status': "No Request",
+#                         'shift_start_time': shift_start.strftime('%H:%M:%S') if shift_start else None,
+#                         'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
+#                         'out_status': None,
+#                         'overtime': None,
+#                     })
+
+#             all_records.extend(attendance_records + leave_records)
+
+#         all_records.sort(key=lambda x: x['date'])
+
+#         return Response({
+#             'all_records': all_records,
+#             'from_date': from_date.strftime('%Y-%m-%d') if from_date else None,
+#             'to_date': to_date.strftime('%Y-%m-%d') if to_date else None
+#         }, status=status.HTTP_200_OK)
+
+#     except Exception as e:
+#         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+######################################################################################################
+
+# August 22 after  New FE Superadmin Attendance 
+
 @api_view(['GET'])
 def all_user_attendance_history(request):
     try:
@@ -8568,24 +8695,29 @@ def all_user_attendance_history(request):
             attendance_query = Attendance.objects.filter(user=user).select_related('shift', 'location')
 
             # Choose the right leave request model
-            if user.designation == 'Employee':
-                leave_query = LeaveRequest.objects.filter(user=user, status='approved')
-            elif user.designation == 'Supervisor':
-                leave_query = SupervisorLeaveRequest.objects.filter(user=user, status='approved')
-            elif user.designation == 'Human Resources':
-                leave_query = HrLeaveRequest.objects.filter(user=user, status='approved')
-            else:
-                leave_query = []
+            leave_model = {
+                'Employee': LeaveRequest,
+                'Supervisor': SupervisorLeaveRequest,
+                'Human Resources': HrLeaveRequest
+            }.get(user.designation, None)
+
+            leave_query = leave_model.objects.filter(user=user, status='approved') if leave_model else []
 
             if from_date and to_date:
                 attendance_query = attendance_query.filter(date__range=[from_date, to_date])
                 leave_query = leave_query.filter(Q(start_date__lte=to_date) & Q(end_date__gte=from_date))
 
+            # -------------------------------
+            # Attendance Records
+            # -------------------------------
             attendance_records = []
+            attendance_dates = set()
             for record in attendance_query:
+                attendance_dates.add(record.date)
                 reset_request = ResetRequest.objects.filter(user=user, date=record.date).order_by('-created_at').first()
 
-                overtime = "N/A"
+                # Overtime calculation
+                overtime = "00:00:00"
                 if shift_end and record.time_out and record.time_in:
                     shift_end_datetime = datetime.combine(record.date, shift_end)
                     time_out_datetime = datetime.combine(record.date, record.time_out)
@@ -8597,17 +8729,7 @@ def all_user_attendance_history(request):
                         seconds = total_seconds % 60
                         overtime = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-                total_working_hours = record.total_working_hours
-                if record.time_in and record.time_out:
-                    time_in_datetime = datetime.combine(record.date, record.time_in)
-                    time_out_datetime = datetime.combine(record.date, record.time_out)
-                    if time_out_datetime >= time_in_datetime:
-                        working_hours_delta = time_out_datetime - time_in_datetime
-                        total_seconds = int(working_hours_delta.total_seconds())
-                        hours = total_seconds // 3600
-                        minutes = (total_seconds % 3600) // 60
-                        seconds = total_seconds % 60
-                        total_working_hours = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                total_working_hours = record.total_working_hours or "00:00:00"
 
                 attendance_records.append({
                     'user_id': user.user_id,
@@ -8623,14 +8745,20 @@ def all_user_attendance_history(request):
                     'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
                     'out_status': record.out_status,
                     'overtime': overtime,
+                    'status': record.status,
                     'location': record.location.location_name if record.location else None
                 })
 
+            # -------------------------------
+            # Leave Records
+            # -------------------------------
             leave_records = []
+            leave_dates = set()
             for leave in leave_query:
                 leave_days = (leave.end_date - leave.start_date).days + 1
                 for i in range(leave_days):
                     leave_date = leave.start_date + timedelta(days=i)
+                    leave_dates.add(leave_date)
                     if from_date and to_date and not (from_date <= leave_date <= to_date):
                         continue
                     leave_records.append({
@@ -8647,11 +8775,37 @@ def all_user_attendance_history(request):
                         'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
                         'out_status': None,
                         'overtime': None,
+                        'status': 'Leave',
                     })
+
+            # -------------------------------
+            # Absent Records
+            # -------------------------------
+            if from_date and to_date:
+                day_cursor = from_date
+                while day_cursor <= to_date:
+                    if day_cursor not in attendance_dates and day_cursor not in leave_dates:
+                        all_records.append({
+                            'user_id': user.user_id,
+                            'user_name': user.user_name,
+                            'designation': user.designation,
+                            'date': day_cursor.strftime('%Y-%m-%d'),
+                            'type': 'absent',
+                            'time_in': None,
+                            'time_out': None,
+                            'total_working_hours': "00:00:00",
+                            'reset_status': "No Request",
+                            'shift_start_time': shift_start.strftime('%H:%M:%S') if shift_start else None,
+                            'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
+                            'out_status': None,
+                            'overtime': None,
+                            'status': 'Absent',
+                        })
+                    day_cursor += timedelta(days=1)
 
             all_records.extend(attendance_records + leave_records)
 
-        all_records.sort(key=lambda x: x['date'])
+        all_records.sort(key=lambda x: (x['date'], x['user_id']))
 
         return Response({
             'all_records': all_records,
@@ -8661,9 +8815,6 @@ def all_user_attendance_history(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    
-    
     
 @api_view(['GET'])
 def admin_user_reset_requests(request):
@@ -8797,6 +8948,177 @@ def admin_reject_user_reset_request(request, id):
 
 #######################################################################################################
 
+#Aug 22 before changing the submit for new file
+
+# @api_view(['POST'])
+# def submit_user_attendance(request):
+#     user_id = request.data.get('user_id')
+#     operation = request.data.get('operation')
+
+#     if not user_id:
+#         return Response({"error": "User ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+#     # No attendance on Sundays
+#     if datetime.now().weekday() == 6:
+#         return Response({"error": "Check-in is not allowed on Sundays."}, status=status.HTTP_400_BAD_REQUEST)
+
+#     try:
+#         user = User.objects.get(user_id=user_id)
+#         today = datetime.now().date()
+#         designation = user.designation.lower()
+
+#         # Map designation to appropriate leave model
+#         leave_model = {
+#             'employee': LeaveRequest,
+#             'supervisor': SupervisorLeaveRequest,
+#             'hr': HrLeaveRequest
+#         }.get(designation)
+
+#         if not leave_model:
+#             return Response({"error": f"Invalid user designation '{designation}'."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Check if user is on approved leave today
+#         leave_request = leave_model.objects.filter(
+#             user=user,
+#             start_date__lte=today,
+#             end_date__gte=today,
+#             status='approved'
+#         ).first()
+
+#         if leave_request:
+#             return Response({
+#                 "error": f"You are on leave today ({leave_request.start_date} to {leave_request.end_date}). Check-in is not allowed."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         if operation == 'check_in':
+#             shift_id = request.data.get('shift')
+#             location_name = request.data.get('location')
+#             notes = request.data.get('notes')
+#             latitude = request.data.get('latitude')
+#             longitude = request.data.get('longitude')
+
+#             if not all([shift_id, location_name]):
+#                 return Response({"error": "Shift and location are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             shift = Shift.objects.get(id=shift_id)
+#             location = Location.objects.get(location_name=location_name)
+
+#             # Check if already checked in today
+#             if Attendance.objects.filter(user=user, date=today).exists():
+#                 return Response({"error": "You have already checked in for today."}, status=status.HTTP_200_OK)
+
+#             current_time = datetime.now().time()
+#             shift_start_dt = datetime.combine(today, shift.shift_start_time)
+#             one_hour_later = shift_start_dt + timedelta(hours=1)
+#             current_dt = datetime.combine(today, current_time)
+
+#             # Late check-in logic (> 1 hour after shift start)
+#             if current_dt > one_hour_later:
+#                 reset_approved = ResetRequest.objects.filter(
+#                     user=user,
+#                     date=today,
+#                     status='approved'
+#                 ).exists()
+#                 if not reset_approved:
+#                     return Response({
+#                         "error": f"You are on leave today. Check-in is not allowed."
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+#             in_status = 'Late' if current_time > shift.shift_start_time else 'On time'
+
+#             Attendance.objects.create(
+#                 date=today,
+#                 shift=shift,
+#                 location=location,
+#                 notes=notes,
+#                 time_in=current_time.strftime('%H:%M:%S'),
+#                 in_status=in_status,
+#                 user=user,
+#                 latitude=latitude,
+#                 longitude=longitude,
+#             )
+#             return Response({
+#                 "message": "Checked in successfully.",
+#                 "time_in": current_time.strftime('%H:%M:%S'),
+#                 "in_status": in_status
+#             }, status=status.HTTP_201_CREATED)
+
+#         elif operation == 'check_out':
+#             current_time = datetime.now().time()
+#             time_out_str = datetime.now().strftime('%H:%M:%S')
+
+#             attendance_qs = Attendance.objects.filter(user=user, date=today, time_out=None)
+#             last_attendance = attendance_qs.first()
+
+#             if not last_attendance:
+#                 reset_approved = ResetRequest.objects.filter(user=user, date=today, status='approved').exists()
+#                 if reset_approved:
+#                     last_attendance = Attendance.objects.filter(user=user, date=today).first()
+#                 else:
+#                     return Response({"error": "You have already checked out for today."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             if not last_attendance:
+#                 return Response({"error": "No attendance record found for today."}, status=status.HTTP_400_BAD_REQUEST)
+
+#             shift = last_attendance.shift
+#             shift_end_time = shift.shift_end_time
+#             overtime_start_time = (datetime.combine(today, shift_end_time) + timedelta(minutes=10)).time()
+
+#             if current_time < shift_end_time:
+#                 out_status = 'Early'
+#                 overtime_str = '00:00:00'
+#             elif shift_end_time <= current_time <= overtime_start_time:
+#                 out_status = 'On time'
+#                 overtime_str = '00:00:00'
+#             else:
+#                 out_status = 'Overtime'
+#                 overtime = datetime.combine(today, current_time) - datetime.combine(today, overtime_start_time)
+#                 overtime_hours = overtime.seconds // 3600
+#                 overtime_minutes = (overtime.seconds % 3600) // 60
+#                 overtime_seconds = overtime.seconds % 60
+#                 overtime_str = f"{overtime_hours:02}:{overtime_minutes:02}:{overtime_seconds:02}"
+
+#             time_in = last_attendance.time_in
+#             total_working_time = datetime.combine(today, current_time) - datetime.combine(today, time_in)
+
+#             # Deduct 1 hour break if applicable
+#             break_start = time(13, 0, 0)
+#             break_end = time(14, 0, 0)
+#             if time_in <= break_start and current_time >= break_end:
+#                 total_working_time -= timedelta(hours=1)
+
+#             total_hours = total_working_time.seconds // 3600
+#             total_minutes = (total_working_time.seconds % 3600) // 60
+#             total_seconds = total_working_time.seconds % 60
+#             total_working_hours = f"{total_hours:02}:{total_minutes:02}:{total_seconds:02}"
+
+#             last_attendance.time_out = time_out_str
+#             last_attendance.out_status = out_status
+#             last_attendance.overtime = overtime_str
+#             last_attendance.total_working_hours = total_working_hours
+#             last_attendance.save()
+
+#             return Response({
+#                 "message": "Checked out successfully.",
+#                 "time_out": time_out_str,
+#                 "out_status": out_status
+#             }, status=status.HTTP_200_OK)
+
+#         else:
+#             return Response({"error": "Invalid operation. Use 'check_in' or 'check_out'."}, status=status.HTTP_400_BAD_REQUEST)
+
+#     except User.DoesNotExist:
+#         return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+#     except (Shift.DoesNotExist, Location.DoesNotExist):
+#         return Response({'error': 'Shift or location not found.'}, status=status.HTTP_400_BAD_REQUEST)
+#     except Exception as e:
+#         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+#######################################################################################################################################
+
+#Aug 22 after changing the submit for new file
+
 
 @api_view(['POST'])
 def submit_user_attendance(request):
@@ -8813,9 +9135,11 @@ def submit_user_attendance(request):
     try:
         user = User.objects.get(user_id=user_id)
         today = datetime.now().date()
+        current_time = datetime.now().time()
+        current_dt = datetime.combine(today, current_time)
         designation = user.designation.lower()
 
-        # Map designation to appropriate leave model
+        # Map designation to leave model
         leave_model = {
             'employee': LeaveRequest,
             'supervisor': SupervisorLeaveRequest,
@@ -8825,14 +9149,13 @@ def submit_user_attendance(request):
         if not leave_model:
             return Response({"error": f"Invalid user designation '{designation}'."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if user is on approved leave today
+        # Approved leave today
         leave_request = leave_model.objects.filter(
             user=user,
             start_date__lte=today,
             end_date__gte=today,
             status='approved'
         ).first()
-
         if leave_request:
             return Response({
                 "error": f"You are on leave today ({leave_request.start_date} to {leave_request.end_date}). Check-in is not allowed."
@@ -8851,29 +9174,34 @@ def submit_user_attendance(request):
             shift = Shift.objects.get(id=shift_id)
             location = Location.objects.get(location_name=location_name)
 
-            # Check if already checked in today
+            # Block if already checked in today
             if Attendance.objects.filter(user=user, date=today).exists():
                 return Response({"error": "You have already checked in for today."}, status=status.HTTP_200_OK)
 
-            current_time = datetime.now().time()
             shift_start_dt = datetime.combine(today, shift.shift_start_time)
             one_hour_later = shift_start_dt + timedelta(hours=1)
-            current_dt = datetime.combine(today, current_time)
+            shift_end_dt = datetime.combine(today, shift.shift_end_time)
 
-            # Late check-in logic (> 1 hour after shift start)
-            if current_dt > one_hour_later:
-                reset_approved = ResetRequest.objects.filter(
-                    user=user,
-                    date=today,
-                    status='approved'
-                ).exists()
-                if not reset_approved:
+            # Block check-in after shift end
+            if current_dt > shift_end_dt:
+                return Response({"error": "Shift ended. Check-in not allowed."}, status=400)
+
+            # Determine attendance status
+            if current_dt <= one_hour_later:
+                attendance_status = 'Present'
+            else:
+                # Needs admin approval to check-in late
+                reset_approved = ResetRequest.objects.filter(user=user, date=today, status='approved').exists()
+                if reset_approved:
+                    attendance_status = 'Late'
+                else:
                     return Response({
-                        "error": f"You are on leave today. Check-in is not allowed."
+                        "error": "Check-in after 1 hour requires admin approval. You cannot check-in."
                     }, status=status.HTTP_400_BAD_REQUEST)
 
             in_status = 'Late' if current_time > shift.shift_start_time else 'On time'
 
+            # Create attendance record
             Attendance.objects.create(
                 date=today,
                 shift=shift,
@@ -8881,20 +9209,21 @@ def submit_user_attendance(request):
                 notes=notes,
                 time_in=current_time.strftime('%H:%M:%S'),
                 in_status=in_status,
+                status=attendance_status,
                 user=user,
                 latitude=latitude,
                 longitude=longitude,
             )
+
             return Response({
                 "message": "Checked in successfully.",
                 "time_in": current_time.strftime('%H:%M:%S'),
-                "in_status": in_status
+                "in_status": in_status,
+                "status": attendance_status
             }, status=status.HTTP_201_CREATED)
 
         elif operation == 'check_out':
-            current_time = datetime.now().time()
             time_out_str = datetime.now().strftime('%H:%M:%S')
-
             attendance_qs = Attendance.objects.filter(user=user, date=today, time_out=None)
             last_attendance = attendance_qs.first()
 
@@ -8903,17 +9232,16 @@ def submit_user_attendance(request):
                 if reset_approved:
                     last_attendance = Attendance.objects.filter(user=user, date=today).first()
                 else:
-                    return Response({"error": "You have already checked out for today."}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not last_attendance:
-                return Response({"error": "No attendance record found for today."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "You have not checked in today."}, status=status.HTTP_400_BAD_REQUEST)
 
             shift = last_attendance.shift
             shift_end_time = shift.shift_end_time
             overtime_start_time = (datetime.combine(today, shift_end_time) + timedelta(minutes=10)).time()
 
+            # Determine out_status and overtime
             if current_time < shift_end_time:
                 out_status = 'Early'
+                last_attendance.status = 'Half Day'
                 overtime_str = '00:00:00'
             elif shift_end_time <= current_time <= overtime_start_time:
                 out_status = 'On time'
@@ -8921,25 +9249,25 @@ def submit_user_attendance(request):
             else:
                 out_status = 'Overtime'
                 overtime = datetime.combine(today, current_time) - datetime.combine(today, overtime_start_time)
-                overtime_hours = overtime.seconds // 3600
-                overtime_minutes = (overtime.seconds % 3600) // 60
-                overtime_seconds = overtime.seconds % 60
-                overtime_str = f"{overtime_hours:02}:{overtime_minutes:02}:{overtime_seconds:02}"
+                hours, remainder = divmod(overtime.seconds, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                overtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
 
-            time_in = last_attendance.time_in
+            # Calculate total working hours
+            time_in = datetime.strptime(str(last_attendance.time_in), '%H:%M:%S').time()
             total_working_time = datetime.combine(today, current_time) - datetime.combine(today, time_in)
 
-            # Deduct 1 hour break if applicable
+            # Deduct 1-hour lunch break if applicable
             break_start = time(13, 0, 0)
             break_end = time(14, 0, 0)
             if time_in <= break_start and current_time >= break_end:
                 total_working_time -= timedelta(hours=1)
 
-            total_hours = total_working_time.seconds // 3600
-            total_minutes = (total_working_time.seconds % 3600) // 60
-            total_seconds = total_working_time.seconds % 60
-            total_working_hours = f"{total_hours:02}:{total_minutes:02}:{total_seconds:02}"
+            hours, remainder = divmod(total_working_time.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            total_working_hours = f"{hours:02}:{minutes:02}:{seconds:02}"
 
+            # Update attendance
             last_attendance.time_out = time_out_str
             last_attendance.out_status = out_status
             last_attendance.overtime = overtime_str
@@ -8949,7 +9277,8 @@ def submit_user_attendance(request):
             return Response({
                 "message": "Checked out successfully.",
                 "time_out": time_out_str,
-                "out_status": out_status
+                "out_status": out_status,
+                "status": last_attendance.status
             }, status=status.HTTP_200_OK)
 
         else:
@@ -8961,6 +9290,20 @@ def submit_user_attendance(request):
         return Response({'error': 'Shift or location not found.'}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #######################################################################################################################################

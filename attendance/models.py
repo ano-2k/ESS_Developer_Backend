@@ -23,6 +23,14 @@ class Attendance(models.Model):
     out_status = models.CharField(max_length=20, null=True, blank=True)
     overtime = models.CharField(max_length=20, null=True, blank=True)
     total_working_hours = models.CharField(max_length=20, null=True, blank=True)
+    STATUS_CHOICES = [
+        ('Present', 'Present'),
+        ('Late', 'Late'),
+        ('Absent', 'Absent'),
+        ('Half Day', 'Half Day')
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Present')
+
     latitude = models.CharField(max_length=20, null=True, blank=True)
     longitude = models.CharField(max_length=20, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
