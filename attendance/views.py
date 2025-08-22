@@ -8687,6 +8687,12 @@ def all_user_attendance_history(request):
         users = User.objects.all().select_related('shift')
         all_records = []
 
+        # Initialize counters
+        present_count = 0
+        late_count = 0
+        halfday_count = 0
+        absent_count = 0
+
         for user in users:
             shift = user.shift
             shift_start = shift.shift_start_time if shift else None
@@ -8694,18 +8700,8 @@ def all_user_attendance_history(request):
 
             attendance_query = Attendance.objects.filter(user=user).select_related('shift', 'location')
 
-            # Choose the right leave request model
-            leave_model = {
-                'Employee': LeaveRequest,
-                'Supervisor': SupervisorLeaveRequest,
-                'Human Resources': HrLeaveRequest
-            }.get(user.designation, None)
-
-            leave_query = leave_model.objects.filter(user=user, status='approved') if leave_model else []
-
             if from_date and to_date:
                 attendance_query = attendance_query.filter(date__range=[from_date, to_date])
-                leave_query = leave_query.filter(Q(start_date__lte=to_date) & Q(end_date__gte=from_date))
 
             # -------------------------------
             # Attendance Records
@@ -8731,6 +8727,15 @@ def all_user_attendance_history(request):
 
                 total_working_hours = record.total_working_hours or "00:00:00"
 
+                # Count status
+                status_lower = record.status.lower() if record.status else ''
+                if status_lower == 'present':
+                    present_count += 1
+                elif status_lower == 'late':
+                    late_count += 1
+                elif status_lower == 'half day':
+                    halfday_count += 1
+
                 attendance_records.append({
                     'user_id': user.user_id,
                     'user_name': user.user_name,
@@ -8750,41 +8755,13 @@ def all_user_attendance_history(request):
                 })
 
             # -------------------------------
-            # Leave Records
-            # -------------------------------
-            leave_records = []
-            leave_dates = set()
-            for leave in leave_query:
-                leave_days = (leave.end_date - leave.start_date).days + 1
-                for i in range(leave_days):
-                    leave_date = leave.start_date + timedelta(days=i)
-                    leave_dates.add(leave_date)
-                    if from_date and to_date and not (from_date <= leave_date <= to_date):
-                        continue
-                    leave_records.append({
-                        'user_id': user.user_id,
-                        'user_name': user.user_name,
-                        'designation': user.designation,
-                        'date': leave_date.strftime('%Y-%m-%d'),
-                        'type': 'leave',
-                        'time_in': None,
-                        'time_out': None,
-                        'total_working_hours': "00:00:00",
-                        'reset_status': "No Request",
-                        'shift_start_time': shift_start.strftime('%H:%M:%S') if shift_start else None,
-                        'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
-                        'out_status': None,
-                        'overtime': None,
-                        'status': 'Leave',
-                    })
-
-            # -------------------------------
             # Absent Records
             # -------------------------------
             if from_date and to_date:
                 day_cursor = from_date
                 while day_cursor <= to_date:
-                    if day_cursor not in attendance_dates and day_cursor not in leave_dates:
+                    if day_cursor not in attendance_dates:
+                        absent_count += 1
                         all_records.append({
                             'user_id': user.user_id,
                             'user_name': user.user_name,
@@ -8803,18 +8780,23 @@ def all_user_attendance_history(request):
                         })
                     day_cursor += timedelta(days=1)
 
-            all_records.extend(attendance_records + leave_records)
+            all_records.extend(attendance_records)
 
         all_records.sort(key=lambda x: (x['date'], x['user_id']))
 
         return Response({
             'all_records': all_records,
             'from_date': from_date.strftime('%Y-%m-%d') if from_date else None,
-            'to_date': to_date.strftime('%Y-%m-%d') if to_date else None
+            'to_date': to_date.strftime('%Y-%m-%d') if to_date else None,
+            'present_count': present_count,
+            'late_count': late_count,
+            'halfday_count': halfday_count,
+            'absent_count': absent_count,
         }, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     
 @api_view(['GET'])
 def admin_user_reset_requests(request):
