@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from rest_framework import status
 from datetime import datetime, timedelta, timezone
 from calendar import monthrange
-from authentication.models import Admin, Ar, Manager, Supervisor, Hr, User
+from authentication.models import Admin, Ar, Manager, Supervisor, Hr, User,Department
 from leaves.models import ArLeaveRequest, LeaveRequest, ManagerLeaveRequest, SupervisorLeaveRequest,HrLeaveRequest,LateloginReason
 from .models import CalendarEvent, Employee, ResetRequest, Shift, Attendance, Location, PermissionHour
 from authentication.serializers import LocationSerializer, ShiftSerializer
@@ -9678,6 +9678,7 @@ def all_user_monthly_summary(request):
             result.append({
                 "employeeId": user.user_id,
                 "name": user.user_name,
+                'designation': user.designation,
                 "department": user.department.department_name if user.department else "N/A",
                 "totalDays": total_days,
                 "presentDays": present_days,
@@ -9693,7 +9694,6 @@ def all_user_monthly_summary(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-    
     
     
 @api_view(['GET'])
