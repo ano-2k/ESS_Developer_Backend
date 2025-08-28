@@ -8665,7 +8665,7 @@ def check_in_employee_with_auto_leave(request):
 ######################################################################################################
 
 # August 22 after  New FE Superadmin Attendance 
-
+# USER = EMPLOYEE
 @api_view(['GET'])
 def all_user_attendance_history(request):
     try:
@@ -9630,3 +9630,123 @@ def user_employee_attendance_history(request, user_id):
 #     except Exception as e:
 #         return Response({"message": "An unexpected error occurred.", "error": str(e)},
 #                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def all_user_monthly_summary(request):
+    try:
+        month = request.query_params.get('month')  # format: YYYY-MM
+        if not month:
+            return Response({"error": "Please provide month in YYYY-MM format"}, status=400)
+
+        try:
+            year, month_num = map(int, month.split("-"))
+            start_date = datetime(year, month_num, 1).date()
+            if month_num == 12:
+                end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+            else:
+                end_date = datetime(year, month_num + 1, 1).date() - timedelta(days=1)
+        except:
+            return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
+
+        users = User.objects.filter(designation="Employee").select_related("department")
+        result = []
+
+        total_days = (end_date - start_date).days + 1
+
+        for user in users:
+            attendance_qs = Attendance.objects.filter(user=user, date__range=[start_date, end_date])
+
+            present_days = attendance_qs.filter(status__iexact="present").count()
+            late_days = attendance_qs.filter(status__iexact="late").count()
+            half_days = attendance_qs.filter(status__iexact="half day").count()
+
+            # Absent = total_days - days with attendance records
+            attendance_dates = attendance_qs.values_list("date", flat=True).distinct()
+            absent_days = total_days - len(attendance_dates)
+
+            # Overtime calculation (sum of all)
+            overtime_seconds = 0
+            for rec in attendance_qs:
+                if rec.overtime:
+                    h, m, s = map(int, str(rec.overtime).split(":"))
+                    overtime_seconds += h*3600 + m*60 + s
+            overtime_hours = round(overtime_seconds / 3600, 1)
+
+            attendance_rate = (present_days / total_days) * 100 if total_days > 0 else 0
+
+            result.append({
+                "employeeId": user.user_id,
+                "name": user.user_name,
+                "department": user.department.department_name if user.department else "N/A",
+                "totalDays": total_days,
+                "presentDays": present_days,
+                "absentDays": absent_days,
+                "lateDays": late_days,
+                "halfDays": half_days,
+                "overtimeHours": overtime_hours,
+                "attendanceRate": round(attendance_rate, 1),
+                "avatar": "".join([p[0] for p in user.user_name.split()][:2]).upper()
+            })
+
+        return Response({"data": result}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+    
+    
+    
+@api_view(['GET'])
+def all_user_department_summary(request):
+    try:
+        month = request.query_params.get('month')  # format: YYYY-MM
+        if not month:
+            return Response({"error": "Please provide month in YYYY-MM format"}, status=400)
+
+        try:
+            year, month_num = map(int, month.split("-"))
+            start_date = datetime(year, month_num, 1).date()
+            if month_num == 12:
+                end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
+            else:
+                end_date = datetime(year, month_num + 1, 1).date() - timedelta(days=1)
+        except:
+            return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
+
+        departments = Department.objects.all()
+        summary = []
+
+        total_days = (end_date - start_date).days + 1
+
+        for dept in departments:
+            employees = User.objects.filter(designation="Employee", department=dept)
+            if not employees.exists():
+                continue
+
+            dept_present = 0
+            dept_absent = 0
+            dept_rate_sum = 0
+
+            for emp in employees:
+                attendance_qs = Attendance.objects.filter(user=emp, date__range=[start_date, end_date])
+                present_days = attendance_qs.filter(status__iexact="present").count()
+                attendance_dates = attendance_qs.values_list("date", flat=True).distinct()
+                absent_days = total_days - len(attendance_dates)
+                dept_present += present_days
+                dept_absent += absent_days
+                rate = (present_days / total_days) * 100 if total_days > 0 else 0
+                dept_rate_sum += rate
+
+            avg_rate = dept_rate_sum / employees.count()
+
+            summary.append({
+                "department": dept.department_name,
+                "employees": employees.count(),
+                "avgAttendance": round(avg_rate, 1),
+                "totalAbsents": dept_absent
+            })
+
+        return Response({"data": summary}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

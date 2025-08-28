@@ -256,6 +256,9 @@ urlpatterns = [
     path('user/submit-user-attendance/', views.submit_user_attendance, name='submit_user_attendance'),
     path('user/user-attendance-form/<str:user_id>/', views.user_attendance_form, name='user-attendance-form'),
     path('user/user-employee-attendance-history/<str:user_id>/', views.user_employee_attendance_history, name='user_employee_attendance_history'),
+    
+    path("monthly-summary/", views.all_user_monthly_summary, name="all_user_monthly_summary"),
+    path("department-summary/", views.all_user_department_summary, name="all_user_department_summary"),
     # path('user/user-weekly-attendance/<str:user_id>/', views.user_weekly_attendance_chart, name='user_weekly_attendance_chart'),
 
 
