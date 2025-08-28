@@ -8699,7 +8699,6 @@ def all_user_attendance_history(request):
             shift_end = shift.shift_end_time if shift else None
 
             attendance_query = Attendance.objects.filter(user=user).select_related('shift', 'location')
-
             if from_date and to_date:
                 attendance_query = attendance_query.filter(date__range=[from_date, to_date])
 
@@ -8727,14 +8726,34 @@ def all_user_attendance_history(request):
 
                 total_working_hours = record.total_working_hours or "00:00:00"
 
-                # Count status
-                status_lower = record.status.lower() if record.status else ''
-                if status_lower == 'present':
+                # -------------------------------
+                # HALF-DAY / STATUS LOGIC
+                # -------------------------------
+                dynamic_status = 'Absent'  # default
+
+                if record.time_in and record.time_out and shift_end:
+                    shift_end_datetime = datetime.combine(record.date, shift_end)
+                    time_out_datetime = datetime.combine(record.date, record.time_out)
+                    if time_out_datetime < shift_end_datetime:
+                        dynamic_status = 'Half Day'
+                    elif record.status and record.status.lower() == 'late':
+                        dynamic_status = 'Late'
+                    else:
+                        dynamic_status = 'Present'
+                elif record.time_in and not record.time_out:
+                    dynamic_status = 'Half Day'
+                elif record.time_in and record.status and record.status.lower() == 'late':
+                    dynamic_status = 'Late'
+
+                # Increment counters
+                if dynamic_status.lower() == 'present':
                     present_count += 1
-                elif status_lower == 'late':
+                elif dynamic_status.lower() == 'late':
                     late_count += 1
-                elif status_lower == 'half day':
+                elif dynamic_status.lower() == 'half day':
                     halfday_count += 1
+                else:
+                    absent_count += 1
 
                 attendance_records.append({
                     'user_id': user.user_id,
@@ -8750,7 +8769,7 @@ def all_user_attendance_history(request):
                     'shift_end_time': shift_end.strftime('%H:%M:%S') if shift_end else None,
                     'out_status': record.out_status,
                     'overtime': overtime,
-                    'status': record.status,
+                    'status': dynamic_status,  # <--- updated status
                     'location': record.location.location_name if record.location else None
                 })
 
@@ -8796,7 +8815,6 @@ def all_user_attendance_history(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
     
 @api_view(['GET'])
 def admin_user_reset_requests(request):
@@ -9649,10 +9667,15 @@ def all_user_monthly_summary(request):
         except:
             return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
 
-        users = User.objects.filter(designation="Employee").select_related("department")
+        users = User.objects.all().select_related("department")
         result = []
 
-        total_days = (end_date - start_date).days + 1
+        # Totals across all employees
+        total_present_days = 0
+        total_absent_days = 0
+        total_late_days = 0
+        total_half_days = 0
+        total_employees = users.count()
 
         for user in users:
             attendance_qs = Attendance.objects.filter(user=user, date__range=[start_date, end_date])
@@ -9660,12 +9683,14 @@ def all_user_monthly_summary(request):
             present_days = attendance_qs.filter(status__iexact="present").count()
             late_days = attendance_qs.filter(status__iexact="late").count()
             half_days = attendance_qs.filter(status__iexact="half day").count()
+            absent_days = attendance_qs.filter(status__iexact="absent").count()  # ONLY explicit absent
 
-            # Absent = total_days - days with attendance records
-            attendance_dates = attendance_qs.values_list("date", flat=True).distinct()
-            absent_days = total_days - len(attendance_dates)
+            total_present_days += present_days
+            total_absent_days += absent_days
+            total_late_days += late_days
+            total_half_days += half_days
 
-            # Overtime calculation (sum of all)
+            # Overtime calculation
             overtime_seconds = 0
             for rec in attendance_qs:
                 if rec.overtime:
@@ -9673,14 +9698,15 @@ def all_user_monthly_summary(request):
                     overtime_seconds += h*3600 + m*60 + s
             overtime_hours = round(overtime_seconds / 3600, 1)
 
-            attendance_rate = (present_days / total_days) * 100 if total_days > 0 else 0
+            total_days_recorded = present_days + late_days + half_days + absent_days
+            attendance_rate = (present_days / total_days_recorded * 100) if total_days_recorded > 0 else 0
 
             result.append({
                 "employeeId": user.user_id,
                 "name": user.user_name,
                 'designation': user.designation,
                 "department": user.department.department_name if user.department else "N/A",
-                "totalDays": total_days,
+                "totalDays": total_days_recorded,
                 "presentDays": present_days,
                 "absentDays": absent_days,
                 "lateDays": late_days,
@@ -9690,12 +9716,21 @@ def all_user_monthly_summary(request):
                 "avatar": "".join([p[0] for p in user.user_name.split()][:2]).upper()
             })
 
-        return Response({"data": result}, status=200)
+        return Response({
+            "data": result,
+            "totals": {
+                "totalEmployees": total_employees,
+                "totalPresentDays": total_present_days,
+                "totalAbsentDays": total_absent_days,
+                "totalLateDays": total_late_days,
+                "totalHalfDays": total_half_days
+            }
+        }, status=200)
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-    
-    
+
+
 @api_view(['GET'])
 def all_user_department_summary(request):
     try:
@@ -9716,37 +9751,63 @@ def all_user_department_summary(request):
         departments = Department.objects.all()
         summary = []
 
-        total_days = (end_date - start_date).days + 1
+        total_present_days = 0
+        total_absent_days = 0
+        total_late_days = 0
+        total_half_days = 0
+        total_employees = 0
 
         for dept in departments:
-            employees = User.objects.filter(designation="Employee", department=dept)
+            employees = User.objects.filter(department=dept)
             if not employees.exists():
                 continue
 
             dept_present = 0
             dept_absent = 0
-            dept_rate_sum = 0
+            dept_late = 0
+            dept_half = 0
 
             for emp in employees:
                 attendance_qs = Attendance.objects.filter(user=emp, date__range=[start_date, end_date])
                 present_days = attendance_qs.filter(status__iexact="present").count()
-                attendance_dates = attendance_qs.values_list("date", flat=True).distinct()
-                absent_days = total_days - len(attendance_dates)
+                late_days = attendance_qs.filter(status__iexact="late").count()
+                half_days = attendance_qs.filter(status__iexact="half day").count()
+                absent_days = attendance_qs.filter(status__iexact="absent").count()
+
                 dept_present += present_days
                 dept_absent += absent_days
-                rate = (present_days / total_days) * 100 if total_days > 0 else 0
-                dept_rate_sum += rate
+                dept_late += late_days
+                dept_half += half_days
 
-            avg_rate = dept_rate_sum / employees.count()
+            total_present_days += dept_present
+            total_absent_days += dept_absent
+            total_late_days += dept_late
+            total_half_days += dept_half
+            total_employees += employees.count()
+
+            total_days_recorded = dept_present + dept_absent + dept_late + dept_half
+            avg_attendance = (dept_present / total_days_recorded * 100) if total_days_recorded > 0 else 0
 
             summary.append({
                 "department": dept.department_name,
                 "employees": employees.count(),
-                "avgAttendance": round(avg_rate, 1),
-                "totalAbsents": dept_absent
+                "avgAttendance": round(avg_attendance, 1),
+                "totalPresent": dept_present,
+                "totalAbsent": dept_absent,
+                "totalLate": dept_late,
+                "totalHalfDays": dept_half
             })
 
-        return Response({"data": summary}, status=200)
+        return Response({
+            "data": summary,
+            "totals": {
+                "totalEmployees": total_employees,
+                "totalPresentDays": total_present_days,
+                "totalAbsentDays": total_absent_days,
+                "totalLateDays": total_late_days,
+                "totalHalfDays": total_half_days
+            }
+        }, status=200)
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
