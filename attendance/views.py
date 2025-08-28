@@ -9744,6 +9744,11 @@ def all_user_monthly_summary(request):
             })
 
         total_employees = len(result)
+        total_days_recorded_for_all = total_employees * last_completed_day
+
+        # Overall attendance rate across all users
+        overall_attendance_rate = ((total_present + 0.5 * total_half) / total_days_recorded_for_all * 100) if total_days_recorded_for_all > 0 else 0
+        overall_attendance_rate = round(overall_attendance_rate, 1)
 
         return Response({
             "data": result,
@@ -9753,13 +9758,13 @@ def all_user_monthly_summary(request):
                 "totalAbsent": total_absent,
                 "totalLate": total_late,
                 "totalHalfDays": total_half,
-                "totalOnLeave": total_on_leave
+                "totalOnLeave": total_on_leave,
+                "overallAttendanceRate": overall_attendance_rate
             }
         }, status=200)
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
-
 
 @api_view(['GET'])
 def all_user_department_summary(request):
