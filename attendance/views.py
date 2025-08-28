@@ -9725,7 +9725,8 @@ def all_user_monthly_summary(request):
             overtime_hours = round(overtime_seconds / 3600, 1)
 
             total_days_recorded = last_completed_day
-            attendance_rate = ((present_days + 0.5 * half_days) / total_days_recorded * 100) if total_days_recorded > 0 else 0
+            attendance_rate = ((present_days + late_days + 0.5 * half_days) / total_days_recorded * 100) if total_days_recorded > 0 else 0
+
 
             result.append({
                 "employeeId": user.user_id,
@@ -9747,7 +9748,8 @@ def all_user_monthly_summary(request):
         total_days_recorded_for_all = total_employees * last_completed_day
 
         # Overall attendance rate across all users
-        overall_attendance_rate = ((total_present + 0.5 * total_half) / total_days_recorded_for_all * 100) if total_days_recorded_for_all > 0 else 0
+        overall_attendance_rate = ((total_present + total_late + 0.5 * total_half) / total_days_recorded_for_all * 100) if total_days_recorded_for_all > 0 else 0
+
         overall_attendance_rate = round(overall_attendance_rate, 1)
 
         return Response({
@@ -9836,7 +9838,8 @@ def all_user_department_summary(request):
             total_employees += dept_count
 
             total_days_recorded = last_completed_day * dept_count
-            avg_attendance = ((dept_present + 0.5 * dept_half) / total_days_recorded * 100) if total_days_recorded > 0 else 0
+            avg_attendance = ((dept_present + dept_late + 0.5 * dept_half) / total_days_recorded * 100) if total_days_recorded > 0 else 0
+
 
             summary.append({
                 "department": dept.department_name,
