@@ -8713,32 +8713,53 @@ def all_user_attendance_history(request):
                 overtime = "00:00:00"
                 dynamic_status = 'Absent'  # default
 
-                if record.time_in and record.time_out and shift_end:
-                    shift_end_datetime = datetime.combine(record.date, shift_end)
-                    time_out_datetime = datetime.combine(record.date, record.time_out)
+                # Respect pre-set statuses first
+                if record.status:
+                    if record.status.lower() == 'late':
+                        dynamic_status = 'Late'
+                    elif record.status.lower() == 'absent':
+                        dynamic_status = 'Absent'
+                    elif record.status.lower() == 'on leave':
+                        dynamic_status = 'On Leave'
+
+                # Only calculate Present/Half Day/Overtime if not already Late/Absent/On Leave
+                if dynamic_status not in ['Late', 'Absent', 'On Leave'] and record.time_in:
                     time_in_datetime = datetime.combine(record.date, record.time_in)
 
-                    # Half Day if checkout is before shift end
-                    if time_out_datetime < shift_end_datetime:
-                        dynamic_status = 'Half Day'
-                        total_working_hours = str(time_out_datetime - time_in_datetime)
-                        overtime = "00:00:00"
-                    else:
-                        # Present with overtime if any
-                        dynamic_status = 'Present'
-                        total_working_hours = str(shift_end_datetime - time_in_datetime)
-                        if time_out_datetime > shift_end_datetime:
-                            overtime_delta = time_out_datetime - shift_end_datetime
-                            total_seconds = int(overtime_delta.total_seconds())
-                            hours = total_seconds // 3600
-                            minutes = (total_seconds % 3600) // 60
-                            seconds = total_seconds % 60
-                            overtime = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-                elif record.time_in and record.status and record.status.lower() == 'late':
-                    dynamic_status = 'Late'
-                elif record.status and record.status.lower() == 'late':
-                    dynamic_status = 'Late'
-                # If time_out missing and not late, dynamic_status remains Absent, working hours/overtime = 00:00:00
+                    # Check if within 1 hour of shift start
+                    if shift_start:
+                        shift_start_datetime = datetime.combine(record.date, shift_start)
+                        late_threshold = shift_start_datetime + timedelta(hours=1)
+
+                        if time_in_datetime <= late_threshold:
+                            # Initially mark as Present
+                            dynamic_status = 'Present'
+
+                            if record.time_out and shift_end:
+                                time_out_datetime = datetime.combine(record.date, record.time_out)
+                                shift_end_datetime = datetime.combine(record.date, shift_end)
+
+                                if time_out_datetime < shift_end_datetime:
+                                    dynamic_status = 'Half Day'
+                                    total_working_hours = str(time_out_datetime - time_in_datetime)
+                                    overtime = "00:00:00"
+                                else:
+                                    total_working_hours = str(shift_end_datetime - time_in_datetime)
+                                    # Overtime
+                                    if time_out_datetime > shift_end_datetime:
+                                        overtime_delta = time_out_datetime - shift_end_datetime
+                                        total_seconds = int(overtime_delta.total_seconds())
+                                        hours = total_seconds // 3600
+                                        minutes = (total_seconds % 3600) // 60
+                                        seconds = total_seconds % 60
+                                        overtime = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                            else:
+                                # No time_out: mark Present, no working hours/overtime
+                                total_working_hours = "00:00:00"
+                                overtime = "00:00:00"
+                        else:
+                            # Checked in after 1 hour: remain Absent (needs admin approval)
+                            dynamic_status = 'Absent'
 
                 # Increment counters
                 if dynamic_status.lower() == 'present':
@@ -8810,7 +8831,8 @@ def all_user_attendance_history(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
+
 @api_view(['GET'])
 def admin_user_reset_requests(request):
     """
@@ -9648,12 +9670,17 @@ def user_employee_attendance_history(request, user_id):
 @api_view(['GET'])
 def all_user_monthly_summary(request):
     try:
-        month = request.query_params.get('month')  # format: YYYY-MM
+        month = request.query_params.get('month', '').strip() 
         if not month:
             return Response({"error": "Please provide month in YYYY-MM format"}, status=400)
 
         try:
-            year, month_num = map(int, month.split("-"))
+            year_str, month_str = month.split("-")
+            year = int(year_str)
+            month_num = int(month_str)
+            if not (1 <= month_num <= 12):
+               return Response({"error": "Month must be between 01 and 12"}, status=400)
+
             start_date = datetime(year, month_num, 1).date()
             days_in_month = calendar.monthrange(year, month_num)[1]
             end_date = datetime(year, month_num, days_in_month).date()
@@ -9698,7 +9725,7 @@ def all_user_monthly_summary(request):
             overtime_hours = round(overtime_seconds / 3600, 1)
 
             total_days_recorded = last_completed_day
-            attendance_rate = ((present_days / total_days_recorded) * 100) if total_days_recorded > 0 else 0
+            attendance_rate = ((present_days + 0.5 * half_days) / total_days_recorded * 100) if total_days_recorded > 0 else 0
 
             result.append({
                 "employeeId": user.user_id,
@@ -9736,12 +9763,17 @@ def all_user_monthly_summary(request):
 @api_view(['GET'])
 def all_user_department_summary(request):
     try:
-        month = request.query_params.get('month')  # format: YYYY-MM
+        month = request.query_params.get('month', '').strip() 
         if not month:
             return Response({"error": "Please provide month in YYYY-MM format"}, status=400)
 
         try:
-            year, month_num = map(int, month.split("-"))
+            year_str, month_str = month.split("-")
+            year = int(year_str)
+            month_num = int(month_str)
+            if not (1 <= month_num <= 12):
+               return Response({"error": "Month must be between 01 and 12"}, status=400)
+
             start_date = datetime(year, month_num, 1).date()
             days_in_month = calendar.monthrange(year, month_num)[1]
             end_date = datetime(year, month_num, days_in_month).date()
@@ -9795,7 +9827,7 @@ def all_user_department_summary(request):
             total_employees += dept_count
 
             total_days_recorded = last_completed_day * dept_count
-            avg_attendance = (dept_present / total_days_recorded * 100) if total_days_recorded > 0 else 0
+            avg_attendance = ((dept_present + 0.5 * dept_half) / total_days_recorded * 100) if total_days_recorded > 0 else 0
 
             summary.append({
                 "department": dept.department_name,
