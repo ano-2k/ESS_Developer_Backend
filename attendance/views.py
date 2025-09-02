@@ -10182,3 +10182,141 @@ def department_overtime_summary(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+from django.db.models import Count
+
+@api_view(['GET'])
+def shift_wise_attendance(request):
+    try:
+        from_date = request.query_params.get('from_date')
+        to_date = request.query_params.get('to_date')
+        shift_id = request.query_params.get('shift_id')
+
+        if not from_date or not to_date:
+            return Response({'error': 'from_date and to_date are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from_date = datetime.strptime(from_date, '%Y-%m-%d').date()
+            to_date = datetime.strptime(to_date, '%Y-%m-%d').date()
+            if from_date > to_date:
+                return Response({'error': 'From date cannot be after to date.'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter shifts
+        shifts_query = Shift.objects.all()
+        if shift_id:
+            shifts_query = shifts_query.filter(id=shift_id)
+
+        response_data = {
+            "shifts": [],
+            "from_date": from_date.strftime('%Y-%m-%d'),
+            "to_date": to_date.strftime('%Y-%m-%d')
+        }
+
+        for shift in shifts_query:
+            users = User.objects.filter(shift=shift).select_related('shift')
+            attendance_records = []
+            present_count = 0
+            late_count = 0
+            halfday_count = 0
+            absent_count = 0
+            attendance_dates = set()
+
+            for user in users:
+                attendance_query = Attendance.objects.filter(
+                    user=user,
+                    date__range=[from_date, to_date]
+                ).select_related('location')
+
+                for record in attendance_query:
+                    attendance_dates.add(record.date)
+                    total_working_hours = "00:00:00"
+                    overtime = "00:00:00"
+                    dynamic_status = 'Absent'
+
+                    if record.time_in:
+                        time_in_datetime = datetime.combine(record.date, record.time_in)
+                        shift_start_datetime = datetime.combine(record.date, shift.shift_start_time)
+                        late_threshold = shift_start_datetime + timedelta(hours=1)
+
+                        if time_in_datetime <= late_threshold:
+                            dynamic_status = 'Present'
+                        else:
+                            dynamic_status = 'Late'
+
+                        if record.time_out:
+                            time_out_datetime = datetime.combine(record.date, record.time_out)
+                            shift_end_datetime = datetime.combine(record.date, shift.shift_end_time)
+                            if dynamic_status == 'Present' and time_out_datetime < shift_end_datetime:
+                                dynamic_status = 'Half Day'
+                                total_working_hours = str(time_out_datetime - time_in_datetime)
+                            else:
+                                total_working_hours = str(shift_end_datetime - time_in_datetime)
+                                if time_out_datetime > shift_end_datetime:
+                                    overtime = str(time_out_datetime - shift_end_datetime)
+
+                    if dynamic_status.lower() == 'present':
+                        present_count += 1
+                    elif dynamic_status.lower() == 'late':
+                        late_count += 1
+                    elif dynamic_status.lower() == 'half day':
+                        halfday_count += 1
+                    else:
+                        absent_count += 1
+
+                    attendance_records.append({
+                        'user_id': user.user_id,
+                        'user_name': user.user_name,
+                        'designation': user.designation,
+                        'employee_id': user.user_id,
+                        'department': user.designation,
+                        'check_in': record.time_in.strftime('%H:%M:%S') if record.time_in else None,
+                        'check_out': record.time_out.strftime('%H:%M:%S') if record.time_out else None,
+                        'working_hours': total_working_hours,
+                        'status': dynamic_status,
+                        'late_by': str(time_in_datetime - late_threshold) if dynamic_status == 'Late' else None,
+                        'location': record.location.location_name if record.location else 'N/A',
+                        'overtime': overtime
+                    })
+
+                # Handle absent records
+                day_cursor = from_date
+                while day_cursor <= to_date:
+                    if day_cursor not in attendance_dates:
+                        absent_count += 1
+                        attendance_records.append({
+                            'user_id': user.user_id,
+                            'user_name': user.user_name,
+                            'designation': user.designation,
+                            'employee_id': user.user_id,
+                            'department': user.designation,
+                            'check_in': None,
+                            'check_out': None,
+                            'working_hours': "00:00:00",
+                            'status': 'Absent',
+                            'late_by': None,
+                            'location': 'N/A',
+                            'overtime': None
+                        })
+                    day_cursor += timedelta(days=1)
+
+            response_data["shifts"].append({
+                "shift_id": shift.id,
+                "shift_number": shift.shift_number,
+                "shift_start_time": shift.shift_start_time.strftime('%H:%M:%S'),
+                "shift_end_time": shift.shift_end_time.strftime('%H:%M:%S'),
+                "attendance_records": attendance_records,
+                "summary": {
+                    "present_count": present_count,
+                    "absent_count": absent_count,
+                    "late_count": late_count,
+                    "halfday_count": halfday_count
+                }
+            })
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
