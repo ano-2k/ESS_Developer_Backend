@@ -260,6 +260,7 @@ urlpatterns = [
     path("monthly-summary/", views.all_user_monthly_summary, name="all_user_monthly_summary"),
     path("department-summary/", views.all_user_department_summary, name="all_user_department_summary"),
     # path('user/user-weekly-attendance/<str:user_id>/', views.user_weekly_attendance_chart, name='user_weekly_attendance_chart'),
-
+   path("overtime-summary/", views.overtime_summary, name="overtime_summary"),
+    path("department-overtime-summary/", views.department_overtime_summary, name="department_overtime_summary"),
 
 ]

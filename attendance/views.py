@@ -10009,3 +10009,176 @@ def all_user_department_summary(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+@api_view(['GET'])
+def overtime_summary(request):
+    try:
+        month = request.query_params.get('month', '').strip()
+        if not month:
+            return Response({"error": "Please provide month in YYYY-MM format"}, status=400)
+
+        # Validate month format
+        try:
+            parts = month.split("-")
+            if len(parts) != 2:
+                raise ValueError("Invalid month format")
+            year_str, month_str = parts
+            year = int(year_str)
+            month_num = int(month_str.lstrip("0") or "0")
+            if not (1 <= month_num <= 12):
+                return Response({"error": "Month must be between 01 and 12"}, status=400)
+        except Exception:
+            return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
+
+        start_date = datetime(year, month_num, 1).date()
+        days_in_month = calendar.monthrange(year, month_num)[1]
+        end_date = datetime(year, month_num, days_in_month).date()
+
+        today = datetime.now().date()
+        is_current_month = today.year == year and today.month == month_num
+        last_completed_day = min(today.day, days_in_month) if is_current_month else days_in_month
+
+        users = User.objects.all().select_related("department")
+        result = []
+
+        total_employees = total_overtime_hours = total_overtime_days = total_overtime_pay = 0
+
+        for user in users:
+            attendance_qs = Attendance.objects.filter(
+                user=user,
+                date__range=[start_date, end_date],
+                overtime__isnull=False
+            )
+
+            # Initialize metrics
+            overtime_seconds = 0
+            overtime_days = 0
+            # Assume overtime_rate is a field in User model
+            overtime_rate = getattr(user, 'overtime_rate', 0.0)  # Fallback to 0 if not available
+
+            # Filter for completed days
+            filtered_attendance = [rec for rec in attendance_qs if rec.date.day <= last_completed_day]
+
+            for rec in filtered_attendance:
+                if rec.overtime:
+                    h, m, s = map(int, str(rec.overtime).split(":"))
+                    overtime_seconds += h * 3600 + m * 60 + s
+                    overtime_days += 1
+
+            total_overtime_hours_user = round(overtime_seconds / 3600, 1)
+            total_overtime_pay_user = round(total_overtime_hours_user * overtime_rate, 2)
+
+            result.append({
+                "employeeId": user.user_id,
+                "name": user.user_name,
+                "designation": user.designation,
+                "department": user.department.department_name if user.department else "N/A",
+                "totalOvertimeHours": total_overtime_hours_user,
+                "overtimeDays": overtime_days,
+                "overtimeRate": round(overtime_rate, 2),
+                "totalOvertimePay": total_overtime_pay_user
+            })
+
+            total_employees += 1
+            total_overtime_hours += total_overtime_hours_user
+            total_overtime_days += overtime_days
+            total_overtime_pay += total_overtime_pay_user
+
+        average_overtime_hours = round(total_overtime_hours / total_employees, 2) if total_employees > 0 else 0
+
+        return Response({
+            "data": result,
+            "totals": {
+                "totalEmployees": total_employees,
+                "totalOvertimeHours": round(total_overtime_hours, 1),
+                "totalOvertimeDays": total_overtime_days,
+                "totalOvertimePay": round(total_overtime_pay, 2),
+                "averageOvertimeHours": average_overtime_hours
+            }
+        }, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
+@api_view(['GET'])
+def department_overtime_summary(request):
+    try:
+        month = request.query_params.get('month', '').strip()
+        if not month:
+            return Response({"error": "Please provide month in YYYY-MM format"}, status=400)
+
+        try:
+            parts = month.split("-")
+            if len(parts) != 2:
+                raise ValueError("Invalid month format")
+            year_str, month_str = parts
+            year = int(year_str)
+            month_num = int(month_str.lstrip("0") or "0")
+            if not (1 <= month_num <= 12):
+                return Response({"error": "Month must be between 01 and 12"}, status=400)
+        except Exception:
+            return Response({"error": "Invalid month format. Use YYYY-MM"}, status=400)
+
+        start_date = datetime(year, month_num, 1).date()
+        days_in_month = calendar.monthrange(year, month_num)[1]
+        end_date = datetime(year, month_num, days_in_month).date()
+
+        today = datetime.now().date()
+        is_current_month = today.year == year and today.month == month_num
+        last_completed_day = min(today.day, days_in_month) if is_current_month else days_in_month
+
+        departments = Department.objects.all()
+        summary = []
+
+        for dept in departments:
+            employees = User.objects.filter(department=dept)
+            if not employees.exists():
+                continue
+
+            dept_employees = dept_overtime_hours = dept_overtime_days = dept_overtime_pay = 0
+
+            for emp in employees:
+                attendance_qs = Attendance.objects.filter(
+                    user=emp,
+                    date__range=[start_date, end_date],
+                    overtime__isnull=False
+                )
+                if not attendance_qs.exists():
+                    continue
+
+                filtered_attendance = [rec for rec in attendance_qs if rec.date.day <= last_completed_day]
+
+                overtime_seconds = 0
+                overtime_days = 0
+                overtime_rate = getattr(emp, 'overtime_rate', 0.0)  # Fallback to 0 if not available
+
+                for rec in filtered_attendance:
+                    if rec.overtime:
+                        h, m, s = map(int, str(rec.overtime).split(":"))
+                        overtime_seconds += h * 3600 + m * 60 + s
+                        overtime_days += 1
+
+                overtime_hours = round(overtime_seconds / 3600, 1)
+                overtime_pay = round(overtime_hours * overtime_rate, 2)
+
+                dept_employees += 1
+                dept_overtime_hours += overtime_hours
+                dept_overtime_days += overtime_days
+                dept_overtime_pay += overtime_pay
+
+            if dept_employees == 0:
+                continue
+
+            summary.append({
+                "department": dept.department_name,
+                "employees": dept_employees,
+                "totalOvertimeHours": round(dept_overtime_hours, 1),
+                "totalOvertimePay": round(dept_overtime_pay, 2),
+                "averageOvertimeHours": round(dept_overtime_hours / dept_employees, 2) if dept_employees > 0 else 0
+            })
+
+        return Response({"data": summary}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
