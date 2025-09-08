@@ -234,3 +234,45 @@ def get_email_from_token_for_md(token):
         return md.email
     except ManagingDirector.DoesNotExist:
         return None
+  
+  
+############################################# September 08 ##################################################  
+import secrets
+from django.utils import timezone
+from datetime import timedelta
+from .models import User
+
+
+# 1. Generate reset token for User
+def generate_reset_token_for_user(email):
+    token = secrets.token_urlsafe(32)
+    expiration = timezone.now() + timedelta(hours=1)
+
+    try:
+        user = User.objects.get(email=email)
+        user.reset_token = token
+        user.token_expiration = expiration
+        user.save()
+        return token
+    except User.DoesNotExist:
+        return None
+
+
+# 2. Validate reset token for User
+def validate_reset_token_for_user(token):
+    try:
+        user = User.objects.get(reset_token=token)
+        if user.token_expiration and user.token_expiration > timezone.now():
+            return True
+        return False
+    except User.DoesNotExist:
+        return False
+
+
+# 3. Get email from reset token for User
+def get_email_from_token_for_user(token):
+    try:
+        user = User.objects.get(reset_token=token)
+        return user.email
+    except User.DoesNotExist:
+        return None

@@ -203,7 +203,18 @@ urlpatterns = [
   
      path('api/superadmin/<str:user_id>/superadmin-features/', views.get_superadmin_features, name='get_superadmin_features'),
      path('api/superadmin/<str:user_id>/update-superadmin-features/', views.update_superadmin_features, name='update_superadmin_features'),
+  
+  # Update User (PUT / PATCH)
+    path('users/update/<str:id>/', views.update_user, name='update_user'),
 
+    # Delete User
+    path('users/delete/<str:id>/', views.delete_user, name='delete_user'),
+
+    # Forgot Password (Send Reset Email)
+    path('users/forgot_password/', views.forgot_password_user, name='forgot_password_user'),
+
+    # Reset Password (Verify Token & Set New Password)
+    path('users/reset_password/<str:token>/', views.reset_password_user, name='reset_password_user'),
 
       
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

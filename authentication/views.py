@@ -4220,3 +4220,138 @@ def update_superadmin_features(request, user_id):
         return Response({'error': 'SuperAdmin not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+# September 8
+
+from .models import User
+from .serializers import UserSerializer
+
+
+@api_view(['PUT', 'PATCH'])
+def update_user(request, id):
+    try:
+        user = User.objects.get(user_id=id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Convert POST data to dict
+    data = request.POST.dict() if request.POST else request.data
+    files = request.FILES
+
+    # Handle streams JSON
+    streams_data = request.POST.get('streams')
+    if streams_data:
+        try:
+            data['streams'] = json.loads(streams_data)
+        except json.JSONDecodeError:
+            return Response({"streams": ["Value must be valid JSON."]}, status=status.HTTP_400_BAD_REQUEST)
+
+    # If password is being updated, validate it
+    if 'password' in data and data['password']:
+        try:
+            validate_password(data['password'])
+            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            data['password'] = hashed_password
+        except ValidationError as e:
+            return Response({"errors": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Merge files into data
+    serializer_data = {**data, **files}
+
+    # Use partial update
+    serializer = UserSerializer(user, data=serializer_data, partial=True)
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response(
+            {"message": "User updated successfully!", "user": serializer.data},
+            status=status.HTTP_200_OK
+        )
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+@api_view(['DELETE'])
+def delete_user(request, id):
+    try:
+        user = User.objects.get(user_id=id)
+        user.delete()
+        return Response({"message": "User deleted successfully!"}, status=status.HTTP_204_NO_CONTENT)
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+from .utils import generate_reset_token_for_user
+from .models import User
+
+
+@api_view(['POST'])
+def forgot_password_user(request):
+    email = request.data.get('email')
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"error": "Email not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    token = generate_reset_token_for_user(email)
+    if token:
+        reset_link = f"http://127.0.0.1:8000/api/users/reset_password/{token}/"
+
+        send_mail(
+            'Password Reset Request',
+            f'Hello {user.user_name},\n\nWe received a request to reset your password.\n'
+            f'Click the link below to reset your password:\n\n{reset_link}\n\n'
+            'If you did not request this change, please ignore this email.\n\n'
+            'Best regards,\nVulturelines Tech Management Private Ltd.',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "Password reset link sent to your email."}, status=status.HTTP_200_OK)
+
+    return Response({"error": "Failed to generate reset token."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+from .utils import validate_reset_token_for_user, get_email_from_token_for_user
+
+
+@api_view(['POST'])
+def reset_password_user(request, token):
+    password = request.data.get('password')
+
+    # Validate reset token
+    if not validate_reset_token_for_user(token):
+        return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Get email from token
+    email = get_email_from_token_for_user(token)
+    if not email:
+        return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    # Validate and hash password
+    try:
+        validate_password(password)
+    except ValidationError as e:
+        return Response({"errors": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+    # Update password and clear token
+    user.password = hashed_password
+    user.reset_token = None
+    user.token_expiration = None
+    user.save()
+
+    return Response({"message": "Password has been reset successfully."}, status=status.HTTP_200_OK)
