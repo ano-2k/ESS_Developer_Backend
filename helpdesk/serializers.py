@@ -642,7 +642,7 @@ class EmployeeTicketSerializer(serializers.ModelSerializer):
 
 
 
-#-----------------------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------OLD WORKING VERSION FOR INDIVIDUAL LOGINS --------------------------------------------------------------------------------------
 
 
 class CombinedTicketSerializer(serializers.Serializer):
@@ -697,6 +697,7 @@ class CombinedTicketSerializer(serializers.Serializer):
         replies = obj.replies.all().order_by('-id')
         return TicketReplySerializer(replies[0]).data if replies.exists() else None
 
+
 class HelpdeskAdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = Admin
@@ -718,4 +719,187 @@ class HelpdeskManagerSerializer(serializers.ModelSerializer):
         fields = ['manager_id', 'manager_name']
         
         
-        
+    
+################################################# New Changes Sep 8 ###############################################################################
+    
+from .models import UserTicket, User
+
+class UserTicketSerializer(serializers.ModelSerializer):
+    created_by = serializers.CharField(required=True)
+    raise_to = serializers.CharField(required=False, allow_null=True)
+    replies = TicketReplySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = UserTicket
+        fields = [
+            'ticket_id', 'subject', 'description', 'service_type', 'attachment',
+            'created_by', 'raise_to', 'status', 'created_on', 'last_updated', 'replies'
+        ]
+
+    def validate_created_by(self, value):
+        """
+        Validate created_by user and store their designation
+        for service_type validation later.
+        """
+        try:
+            user = User.objects.get(user_id=value)
+            self.user_designation = user.designation  # Save designation for later
+            return user
+        except User.DoesNotExist:
+            raise serializers.ValidationError(f"User with user_id {value} does not exist.")
+
+    def validate_raise_to(self, value):
+        """
+        Validate raise_to user.
+        """
+        if value:
+            try:
+                return User.objects.get(user_id=value)
+            except User.DoesNotExist:
+                raise serializers.ValidationError(f"User with user_id {value} does not exist.")
+        return None
+
+    def validate_service_type(self, value):
+        """
+        Restrict service_type choices based on the creator's designation.
+        """
+        if hasattr(self, 'user_designation'):
+            designation = self.user_designation
+            if designation == 'Employee':
+                allowed = [
+                    'task_late_submission','project_materials','risk_management',
+                    'project_deadline','project_plan','resource_allocation','others'
+                ]
+            elif designation == 'Supervisor':
+                allowed = [
+                    'reports_of_project','reports_of_tasks','team_conflicts',
+                    'communication_issue','performance_related','others'
+                ]
+            elif designation == 'Human Resources':
+                allowed = [
+                    'leave_policy','leave_request_related','login_issue','salary_related',
+                    'attendance_related','training_conflicts','others'
+                ]
+            else:
+                allowed = ['others']
+
+            if value not in allowed:
+                raise serializers.ValidationError(
+                    f"Service type '{value}' is not allowed for {designation}."
+                )
+        return value
+
+    def create(self, validated_data):
+        """
+        Create ticket and assign created_by and raise_to.
+        """
+        created_by = validated_data.pop('created_by')
+        raise_to = validated_data.pop('raise_to', None)
+
+        ticket = UserTicket.objects.create(
+            created_by=created_by,
+            raise_to=raise_to,
+            **validated_data
+        )
+        return ticket
+
+    def update(self, instance, validated_data):
+        """
+        Update ticket fields.
+        """
+        if 'created_by' in validated_data:
+            instance.created_by = validated_data.pop('created_by')
+        if 'raise_to' in validated_data:
+            instance.raise_to = validated_data.pop('raise_to')
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
+    def to_representation(self, instance):
+        """
+        Represent the ticket with full details.
+        """
+        representation = super().to_representation(instance)
+
+        representation['created_by'] = {
+            "user_id": instance.created_by.user_id,
+            "name": instance.created_by.user_name,
+            "designation": instance.created_by.designation
+        } if instance.created_by else None
+
+        representation['raise_to'] = {
+            "user_id": instance.raise_to.user_id,
+            "name": instance.raise_to.user_name,
+            "designation": instance.raise_to.designation
+        } if instance.raise_to else None
+
+        representation['service_type'] = instance.get_service_type_display() if instance.service_type else 'Others'
+
+        return representation
+    
+    
+######################################## SEP 11 NEW VERSION UNIFIED VERSION ################################
+
+
+class UserCombinedTicketSerializer(serializers.Serializer):
+    ticket_id = serializers.CharField()
+    subject = serializers.CharField()
+    created_on = serializers.DateTimeField()
+    last_updated = serializers.DateTimeField()
+    status = serializers.CharField()
+    raise_to = serializers.SerializerMethodField()
+    service_type = serializers.SerializerMethodField()
+    created_by = serializers.SerializerMethodField()
+    manager_id = serializers.SerializerMethodField()
+    latest_reply = serializers.SerializerMethodField()
+
+    def get_raise_to(self, obj):
+        # Works for UserTicket and legacy tickets
+        if hasattr(obj, 'raise_to') and obj.raise_to:
+            return {
+                "user_id": obj.raise_to.user_id,
+                "name": obj.raise_to.user_name,
+                "designation": obj.raise_to.designation
+            }
+        return "Unassigned"
+
+    def get_created_by(self, obj):
+        # Replaces old employee/hr/supervisor fields
+        if hasattr(obj, 'created_by') and obj.created_by:
+            return {
+                "user_id": obj.created_by.user_id,
+                "name": obj.created_by.user_name,
+                "designation": obj.created_by.designation
+            }
+        return None
+
+    def get_manager_id(self, obj):
+        # Keeps legacy ManagerTicket handling intact
+        if hasattr(obj, 'manager') and obj.manager:
+            return obj.manager.manager_id
+        elif hasattr(obj, 'manager_id'):
+            return obj.manager_id
+        return None
+
+    def get_service_type(self, obj):
+        if isinstance(obj, OtherTicket):
+            return obj.service_type if obj.service_type else ''
+        return obj.get_service_type_display() if obj.service_type else "Others"
+
+    def get_latest_reply(self, obj):
+        if hasattr(obj, 'replies'):
+            replies = obj.replies.all().order_by('-id')
+            return TicketReplySerializer(replies[0]).data if replies.exists() else None
+        return None
+    
+    
+
+from authentication.models import User
+
+class HelpdeskUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['user_id', 'user_name', 'designation']

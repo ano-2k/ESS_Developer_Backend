@@ -2,11 +2,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from authentication.models import Admin, Hr, Supervisor, Manager,Employee
-from .models import AdministrativeTicket, HRTicket, SupervisorTicket, SystemTicket, OtherTicket,TicketReply,ManagerTicket,EmployeeTicket
+from .models import AdministrativeTicket, HRTicket, SupervisorTicket, SystemTicket, OtherTicket,TicketReply,ManagerTicket,EmployeeTicket, UserTicket
 from .serializers import (
     AdministrativeTicketSerializer, HRTicketSerializer,
     SupervisorTicketSerializer, SystemTicketSerializer, OtherTicketSerializer,ManagerTicketSerializer,EmployeeTicketSerializer,
-    CombinedTicketSerializer, HelpdeskAdminSerializer, HelpdeskHrSerializer, HelpdeskSupervisorSerializer,HelpdeskManagerSerializer
+    CombinedTicketSerializer, HelpdeskAdminSerializer, HelpdeskHrSerializer, HelpdeskSupervisorSerializer,HelpdeskManagerSerializer,UserTicketSerializer,UserCombinedTicketSerializer,HelpdeskUserSerializer
 )
 import logging
 from django.contrib.contenttypes.models import ContentType
@@ -415,3 +415,87 @@ def create_manager_ticket(request):
         return Response({"ticket_id": ticket.ticket_id, "message": "Ticket created successfully"}, status=status.HTTP_201_CREATED)
     logger.error("Validation errors for manager ticket: %s", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+################################################# New Changes Sep 8 ###############################################################################
+
+
+from .serializers import UserTicketSerializer
+@api_view(['POST'])
+def create_user_ticket(request):
+    logger.info("Received data for User Ticket: %s", request.data)
+    serializer = UserTicketSerializer(data=request.data)
+    if serializer.is_valid():
+        ticket = serializer.save()
+        logger.info("User ticket created with ticket_id: %s", ticket.ticket_id)
+        return Response({
+            "ticket_id": ticket.ticket_id,
+            "message": "Ticket created successfully"
+        }, status=status.HTTP_201_CREATED)
+    logger.error("Validation errors for User ticket: %s", serializer.errors)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+from authentication.models import User
+
+@api_view(['GET'])
+def user_ticket_list(request, user_id):
+    """
+    Unified API to fetch all tickets for a user (Employee, HR, Supervisor)
+    - UserTicket handles role-specific tickets
+    - Legacy tickets remain as-is but reference User
+    """
+
+    #Verify user exists
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {"error": f"User with ID {user_id} not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Role-specific tickets from UserTicket
+    user_tickets = UserTicket.objects.filter(created_by=user) | UserTicket.objects.filter(raise_to=user)
+
+    # Legacy tickets (FK points to User now)
+    admin_tickets = AdministrativeTicket.objects.filter(user=user)
+    manager_tickets = ManagerTicket.objects.filter(user=user)
+    system_tickets = SystemTicket.objects.filter(user=user)
+    other_tickets = OtherTicket.objects.filter(user=user)
+
+    # Combine all tickets
+    all_tickets = list(user_tickets) + list(admin_tickets) + list(manager_tickets) + list(system_tickets) + list(other_tickets)
+
+    if not all_tickets:
+        return Response(
+            {"message": "No tickets found for this user"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+    # 5️⃣ Serialize tickets
+    serialized_data = []
+    for ticket in all_tickets:
+        if isinstance(ticket, UserTicket):
+            serialized_data.append(UserTicketSerializer(ticket).data)
+        else:
+            serialized_data.append(UserCombinedTicketSerializer(ticket).data)
+
+    return Response(serialized_data, status=status.HTTP_200_OK)
+
+
+
+@api_view(['GET'])
+def helpdesk_user_list(request):
+    """
+    Returns all users with designation Employee, HR, or Supervisor for Helpdesk
+    """
+    try:
+        users = User.objects.filter(designation__in=['Employee', 'Supervisor', 'Human Resources'])
+        serializer = HelpdeskUserSerializer(users, many=True)
+        logger.info("Successfully retrieved user list for helpdesk")
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error("Error retrieving user list: %s", str(e))
+        return Response({"error": "Failed to retrieve user list"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

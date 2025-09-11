@@ -37,5 +37,14 @@ urlpatterns = [
     
     path('api/helpdesk/manager_list/', views.helpdesk_manager_list, name='helpdesk_manager_list'),
     path('api/tickets/employee_list/<str:employee_id>/', views.employee_ticket_list, name='employee_ticket_list'),
-   
-]
+    
+    
+    ################################################# New Changes Sep 8 ###############################################################################
+    
+    path('api/create-user-tickets/', views.create_user_ticket, name='user-ticket-create'),
+    path('tickets/user/<str:user_id>/', views.user_ticket_list, name='user_ticket_list'),
+    path('api/helpdesk/user_list/', views.helpdesk_user_list, name='helpdesk_user_list'),
+    
+    
+    
+    ]

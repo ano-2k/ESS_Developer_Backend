@@ -280,4 +280,68 @@ class EmployeeTicket(models.Model):
     def __str__(self):
         return f"{self.ticket_id} - {self.subject}"
     
-    
+
+################################################# New Changes Sep 8 ###############################################################################
+
+
+from authentication.models import User
+
+class UserTicket(models.Model):
+    ticket_id = models.CharField(max_length=50, unique=True, blank=True)
+    subject = models.CharField(max_length=200)
+    description = models.TextField()
+
+    # Merge ALL service types from HR, Supervisor, and Employee tickets
+    service_type = models.CharField(max_length=100, choices=[
+        # HR service types
+        ('leave_policy', 'Leave Policy'),
+        ('leave_request_related', 'Leave Request Related'),
+        ('login_issue', 'Login Issue'),
+        ('salary_related', 'Salary Related'),
+        ('attendance_related', 'Attendance Related'),
+        ('training_conflicts', 'Training Conflicts'),
+
+        # Supervisor service types
+        ('reports_of_project', 'Reports of Project'),
+        ('reports_of_tasks', 'Reports of Tasks'),
+        ('team_conflicts', 'Team Conflicts'),
+        ('communication_issue', 'Communication Issue'),
+        ('performance_related', 'Performance Related'),
+
+        # Employee service types
+        ('task_late_submission', 'Task Late Submission'),
+        ('project_materials', 'Project Materials'),
+        ('risk_management', 'Risk Management'),
+        ('project_deadline', 'Project Deadline'),
+        ('project_plan', 'Project Plan'),
+        ('resource_allocation', 'Resource Allocation'),
+
+        # Common
+        ('others', 'Others'),
+    ])
+
+    attachment = models.FileField(upload_to='tickets/user/', null=True, blank=True)
+
+    # Unified user relations
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets_created')
+    raise_to = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, related_name='tickets_received')
+
+    status = models.CharField(max_length=20, choices=[
+        ('Request', 'Request'),
+        ('Review', 'Review'),
+        ('Approved', 'Approved'),
+    ], default='Request')
+
+    created_on = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    replies = GenericRelation('TicketReply', related_query_name='user_tickets')
+
+    def save(self, *args, **kwargs):
+        if not self.ticket_id:
+            last_ticket = UserTicket.objects.order_by('-id').first()
+            self.ticket_id = f"TKT-USER-{last_ticket.id + 1 if last_ticket else 1}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.ticket_id} - {self.subject}"
