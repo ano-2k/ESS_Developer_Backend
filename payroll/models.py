@@ -5,7 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.timezone import now
 from django.db.models import Sum
-
+from authentication.models import User
 class PayrollManagement(models.Model):
     user = models.CharField(max_length=20, default=None)
     user_id = models.CharField(max_length=20)
@@ -272,3 +272,47 @@ class ArSalary(models.Model):
 
     def __str__(self):
         return f"Salary for {self.user_id} - Monthly: {self.monthly_salary}"                                  
+    
+    
+    
+############################# NEW CHANGES AFTER USER MODEL AND CONCEPT IMPEMENTED ####################################   
+
+class UserSalary(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="salaries")
+    annual_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    bonus = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    monthly_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    effective_date = models.DateField(default=now)
+    updated_date = models.DateField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        annual_salary = float(self.annual_salary) if self.annual_salary else 0
+        bonus = float(self.bonus) if self.bonus else 0
+        total_salary = annual_salary + bonus
+        monthly_salary = total_salary / 12
+        self.total_salary = total_salary
+        self.monthly_salary = monthly_salary
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Salary for {self.user.user_id} - Monthly: {self.monthly_salary}"
+    
+    
+class UserPayrollManagement(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payrolls")
+    user_id = models.CharField(max_length=20)
+    month = models.DateField()
+    email = models.EmailField(blank=True)
+    base_salary = models.DecimalField(max_digits=12, decimal_places=2)
+    net_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_working_hours = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    overtime_hours = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    overtime_pay = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    pdf_path = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('user_id', 'month')
+
+    def __str__(self):
+        return f"Payroll for {self.user.user_name} - {self.month.strftime('%B %Y')}"

@@ -12,9 +12,9 @@ from rest_framework import status
 import urllib.parse
 
 from attendance.models import Attendance
-from authentication.models import Ar, Employee, Hr, Manager
+from authentication.models import Ar, Employee, Hr, Manager,User
 from ess.settings import DEFAULT_FROM_EMAIL
-from .models import ArPayrollManagement, ArPayrollNotification, ArSalary, HrPayrollManagement, HrPayrollNotification, HrSalary, ManagerPayrollManagement, ManagerSalary, PayrollManagement, SupervisorPayrollManagement,PayrollNotification, ManagerPayrollNotification, SupervisorPayrollNotification, SupervisorSalary
+from .models import ArPayrollManagement, ArPayrollNotification, ArSalary, HrPayrollManagement, HrPayrollNotification, HrSalary, ManagerPayrollManagement, ManagerSalary, PayrollManagement, SupervisorPayrollManagement,PayrollNotification, ManagerPayrollNotification, SupervisorPayrollNotification, SupervisorSalary,UserSalary,UserPayrollManagement
  # Assuming these helper functions exist
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -1840,3 +1840,106 @@ def ar_salary_history_by_id(request, id):
         )
         
 
+############################# NEW CHANGES AFTER USER MODEL AND CONCEPT IMPEMENTED ####################################   
+
+from payroll.serializers import UserSalarySerializer
+
+@api_view(['GET'])
+def user_salary_history_by_id(request, user_id):
+    """
+    Retrieve unified salary history for a specific user by user_id.
+    """
+    try:
+        salaries = UserSalary.objects.filter(user__id=user_id)
+        if not salaries.exists():
+            return Response(
+                {"detail": "No salary history found for the provided user ID."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = UserSalarySerializer(salaries, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {"detail": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+@api_view(['POST'])
+def user_process_payroll(request):
+    """
+    Unified payroll process for all users (Employee, HR, Supervisor).
+    """
+    month_str = request.data.get('month')
+    user_id = request.data.get('user_id')
+
+    if not month_str or not user_id:
+        return Response({'success': False, 'message': 'User ID and Month are required.'}, status=400)
+
+    try:
+        month = datetime.strptime(month_str, "%Y-%m")
+    except ValueError:
+        return Response({'success': False, 'message': 'Invalid month format. Use YYYY-MM.'}, status=400)
+
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return Response({'success': False, 'message': 'User not found.'}, status=404)
+
+    salary = UserSalary.objects.filter(user=user).first()
+    if not salary:
+        return Response({'success': False, 'message': 'Salary details not found for this user.'}, status=404)
+
+    if UserPayrollManagement.objects.filter(user_id=user_id, month=month).exists():
+        return Response({'success': False, 'message': 'Payslip for this month already generated.'}, status=400)
+
+    if UserSalary.objects.filter(user=user, effective_date__gte=month).exists():
+        return Response({'success': False, 'message': 'Salary effective date has not started yet.'}, status=400)
+
+    total_hours = Attendance.objects.filter(
+        user=user, date__month=month.month, date__year=month.year
+    ).aggregate(Sum('total_working_hours'))['total_working_hours__sum'] or 0
+
+    overtime_hours = Attendance.objects.filter(
+        user=user, date__month=month.month, date__year=month.year
+    ).aggregate(Sum('overtime'))['overtime__sum'] or 0
+
+    base_salary = float(salary.monthly_salary)
+    per_day_rate = base_salary / 30 if base_salary > 0 else 0
+    per_hour_rate = per_day_rate / 8 if per_day_rate > 0 else 0
+    total_days = float(total_hours) / 8 if float(total_hours) > 0 else 0
+    net_salary = total_days * per_day_rate
+    overtime_salary = float(overtime_hours) * per_hour_rate
+
+    payroll = UserPayrollManagement.objects.create(
+        user=user,
+        user_id=user.user_id,
+        month=month,
+        email=user.email,
+        base_salary=base_salary,
+        net_salary=net_salary,
+        total_working_hours=total_hours,
+        overtime_hours=overtime_hours,
+        overtime_pay=overtime_salary,
+    )
+
+    try:
+        pdf_path = create_payslip_pdf(payroll)
+    except Exception as e:
+        return Response({'success': False, 'message': f'Error generating payslip: {str(e)}'}, status=500)
+
+    payroll.pdf_path = pdf_path
+    payroll.save()
+
+    subject = f'Your Payslip for {month.strftime("%B %Y")}'
+    html_message = render_to_string('payroll/payslip_view.html', {'payroll': payroll})
+    plain_message = strip_tags(html_message)
+
+    try:
+        email = EmailMessage(subject, plain_message, DEFAULT_FROM_EMAIL, [user.email])
+        email.attach_file(pdf_path)
+        email.send()
+    except Exception as e:
+        return Response({'success': False, 'message': f'Error sending email: {str(e)}'}, status=500)
+
+    return Response({'success': True, 'payroll_id': payroll.id, 'pdf_path': pdf_path}, status=200)

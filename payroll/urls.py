@@ -4,26 +4,30 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    # Endpoint for employee payroll processing
-    path('process-payroll/', views.process_payroll, name='process_payroll'),
+   
     
     # Endpoint for manager payroll processing
     path('manager-process-payroll/', views.manager_process_payroll, name='manager_process_payroll'),
     
-    # Endpoint for payroll history
-    path('payroll-history/', views.payroll_history, name='payroll_history'),
+   
      # Manager Payroll
     path('manager-payroll-history/', views.manager_payroll_history, name='manager_payroll_history'),
     path('manager/payroll-notification/', views.manager_payroll_notification, name='manager_payroll_notification'),
-    path('get-supervisor-salary/<int:id>/', views.supervisor_salary_history_by_id, name='supervisor_salary_history_by_id'),
+
     path('get-manager-salary/<int:id>/', views.manager_salary_history_by_id, name='manager_salary_history_by_id'),
     path('get-employee-salary/<int:id>/', views.employee_salary_history_by_id, name='employee_salary_history_by_id'),
      path('get-hr-salary/<int:id>/', views.hr_salary_history_by_id, name='hr_salary_history_by_id'),
+     path('get-supervisor-salary/<int:id>/', views.supervisor_salary_history_by_id, name='supervisor_salary_history_by_id'),
     # Payroll Notifications
     path('payroll-notification/', views.payroll_notification, name='payroll_notification'),
-
+     # Endpoint for payroll history
+    path('payroll-history/', views.payroll_history, name='payroll_history'),
     # Supervisor Payroll
     path('supervisor/process-payroll/', views.supervisor_process_payroll, name='supervisor_process_payroll'),
+     # Endpoint for employee payroll processing
+    path('process-payroll/', views.process_payroll, name='process_payroll'),
+    path('hr-process-payroll/', views.hr_process_payroll, name='hr_process_payroll'),
+    
     
     # Bonus Management
     path('bonus/create/', views.create_bonus, name='create_bonus'),
@@ -71,7 +75,7 @@ urlpatterns = [
     # Delete a specific salary record by ID
     path('delete-hr-salary/<int:id>/', views.delete_hr_salary, name='delete_hr_salary'),
     
-    path('hr-process-payroll/', views.hr_process_payroll, name='hr_process_payroll'),
+    
     
     # Endpoint for payroll history
     path('hr_payroll-history/', views.hr_payroll_history, name='hr_payroll_history'),
@@ -92,6 +96,12 @@ urlpatterns = [
     path('ar_payroll-history/', views.ar_payroll_history, name='ar_payroll_history'),
     path('ar_payroll_notification/', views.ar_payroll_notification, name='ar_payroll_notification'),
     path('get-ar-salary/<int:id>/', views.ar_salary_history_by_id, name='ar_salary_history_by_id'),
+    
+    
+    ############################# NEW CHANGES AFTER USER MODEL AND CONCEPT IMPEMENTED ####################################   
+    
+    path('get-user-salary/<int:user_id>/', views.user_salary_history_by_id, name='user_salary_history_by_id'),
+    path('user-process-payroll/', views.user_process_payroll, name='user_process_payroll'),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
