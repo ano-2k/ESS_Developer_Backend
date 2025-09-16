@@ -45,6 +45,11 @@ urlpatterns = [
     path('tickets/user/<str:user_id>/', views.user_ticket_list, name='user_ticket_list'),
     path('api/helpdesk/user_list/', views.helpdesk_user_list, name='helpdesk_user_list'),
     
+    ################################################# New Changes Sep 15 ###############################################################################
+    
+    path('tickets/assigned/<str:user_id>/', views.get_assigned_user_tickets, name='get_assigned_user_tickets'),
+    path('api/tickets/<str:ticket_id>/reply/', views.ticket_replies, name='ticket-replies'),
+    path('api/tickets/<str:ticket_id>/', views.ticket_updates, name='ticket-updates'),
     
     
-    ]
+]

@@ -417,7 +417,7 @@ def create_manager_ticket(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-################################################# New Changes Sep 8 ###############################################################################
+################################################# New Changes after User Model Implementation  ###############################################################################
 
 
 from .serializers import UserTicketSerializer
@@ -499,3 +499,103 @@ def helpdesk_user_list(request):
     except Exception as e:
         logger.error("Error retrieving user list: %s", str(e))
         return Response({"error": "Failed to retrieve user list"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+
+
+@api_view(['GET'])
+def get_assigned_user_tickets(request, user_id):
+    """
+    Fetch all tickets assigned to a specific user (HR, Supervisor, Employee).
+    - Based on unified User and UserTicket model.
+    """
+
+    # check if user exists
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {"error": f"User with user_id {user_id} not found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # fetch tickets assigned to this user
+    tickets = UserTicket.objects.filter(raise_to=user)
+
+    if not tickets.exists():
+        return Response(
+            {"message": f"No tickets found for user {user.user_name} ({user.designation})"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+    serializer = UserTicketSerializer(tickets, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
+####  New apis for Ticket Reply and Ticket Update  by implementing the USER Ticket Model which combine all three HR, SUPERVISOR, EMPLOYEE #####
+
+
+@api_view(['POST'])
+def ticket_replies(request, ticket_id):
+    reply_text = request.data.get('reply_text')
+    if not reply_text:
+        return Response({"error": "Reply text is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    ticket = None
+    for model in [AdministrativeTicket, UserTicket, ManagerTicket, SystemTicket, OtherTicket]:
+        try:
+            ticket = model.objects.get(ticket_id=ticket_id)
+            break
+        except model.DoesNotExist:
+            continue
+    
+    if not ticket:
+        return Response({"error": "Ticket not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Create reply (generic relation works as before)
+    content_type = ContentType.objects.get_for_model(ticket)
+    TicketReply.objects.create(
+        content_type=content_type,
+        object_id=ticket.id,
+        reply_text=reply_text
+    )
+    
+    # Update ticket status and timestamp
+    ticket.status = 'Review'
+    ticket.last_updated = timezone.now()
+    ticket.save()
+    
+    return Response({"message": "Reply submitted successfully"}, status=status.HTTP_200_OK)
+
+
+@api_view(['PATCH'])
+def ticket_updates(request, ticket_id):
+    ticket = None
+    for model in [AdministrativeTicket, UserTicket, ManagerTicket, SystemTicket, OtherTicket]:
+        try:
+            ticket = model.objects.get(ticket_id=ticket_id)
+            break
+        except model.DoesNotExist:
+            continue
+    
+    if not ticket:
+        return Response({"error": "Ticket not found"}, status=status.HTTP_404_NOT_FOUND)
+    
+    serializer_class = {
+        AdministrativeTicket: AdministrativeTicketSerializer,
+        UserTicket: UserTicketSerializer,
+        ManagerTicket: ManagerTicketSerializer,
+        SystemTicket: SystemTicketSerializer,
+        OtherTicket: OtherTicketSerializer
+    }.get(type(ticket))
+    
+    serializer = serializer_class(ticket, data=request.data, partial=True)
+    if serializer.is_valid():
+        ticket.last_updated = timezone.now()
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
