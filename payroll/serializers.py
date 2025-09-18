@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import ArPayrollManagement, ArPayrollNotification, ArSalary, PayrollManagement, PayrollNotification, ManagerPayrollNotification, SupervisorPayrollManagement, SupervisorPayrollNotification, SupervisorSalary,UserSalary,UserPayrollManagement
+from .models import ArPayrollManagement, ArPayrollNotification, ArSalary, PayrollManagement, PayrollNotification, ManagerPayrollNotification, SupervisorPayrollManagement, SupervisorPayrollNotification, SupervisorSalary,UserSalary,UserPayrollManagement,UserPayrollNotification
 from .models import Salary, BonusType,HrSalary,HrPayrollManagement,HrPayrollNotification
 
 class PayrollManagementSerializer(serializers.ModelSerializer):
@@ -180,4 +180,17 @@ class UserPayrollManagementSerializer(serializers.ModelSerializer):
             'month', 'email', 'base_salary', 'net_salary',
             'total_working_hours', 'overtime_hours',
             'overtime_pay', 'pdf_path'
+        ]
+        
+
+
+class UserPayrollNotificationSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.user_name", read_only=True)
+    designation = serializers.CharField(source="user.designation", read_only=True)
+
+    class Meta:
+        model = UserPayrollNotification
+        fields = [
+            'id', 'user', 'user_name', 'designation',
+            'date', 'time', 'message'
         ]

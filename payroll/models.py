@@ -316,3 +316,17 @@ class UserPayrollManagement(models.Model):
 
     def __str__(self):
         return f"Payroll for {self.user.user_name} - {self.month.strftime('%B %Y')}"
+    
+
+
+class UserPayrollNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payroll_notifications")
+    date = models.DateField(default=now)
+    time = models.TimeField(auto_now_add=True)
+    message = models.TextField(default="")
+
+    class Meta:
+        ordering = ['-date', '-time']  # default ordering by latest
+
+    def __str__(self):
+        return f"Notification for {self.user.user_name} on {self.date} at {self.time}"

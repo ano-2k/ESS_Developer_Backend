@@ -102,6 +102,14 @@ urlpatterns = [
     
     path('get-user-salary/<int:user_id>/', views.user_salary_history_by_id, name='user_salary_history_by_id'),
     path('user-process-payroll/', views.user_process_payroll, name='user_process_payroll'),
+    path('user_payroll-history/', views.user_payroll_history, name='user_payroll_history'),
+    path('user-salary/create/', views.create_user_salary, name='create_user_salary'),
+    
+
+    path('user-salary/history/', views.user_salary_history, name='user_salary_history'),
+    path('update-user-salary/<int:id>/', views.update_user_salary, name='update-user-salary'),
+    path('delete-user-salary/<int:id>/', views.delete_user_salary, name='delete-user-salary'),
+    path('user-payroll-notification/', views.user_payroll_notification, name='user_payroll_notification'),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

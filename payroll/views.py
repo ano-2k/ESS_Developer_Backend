@@ -14,7 +14,7 @@ import urllib.parse
 from attendance.models import Attendance
 from authentication.models import Ar, Employee, Hr, Manager,User
 from ess.settings import DEFAULT_FROM_EMAIL
-from .models import ArPayrollManagement, ArPayrollNotification, ArSalary, HrPayrollManagement, HrPayrollNotification, HrSalary, ManagerPayrollManagement, ManagerSalary, PayrollManagement, SupervisorPayrollManagement,PayrollNotification, ManagerPayrollNotification, SupervisorPayrollNotification, SupervisorSalary,UserSalary,UserPayrollManagement
+from .models import ArPayrollManagement, ArPayrollNotification, ArSalary, HrPayrollManagement, HrPayrollNotification, HrSalary, ManagerPayrollManagement, ManagerSalary, PayrollManagement, SupervisorPayrollManagement,PayrollNotification, ManagerPayrollNotification, SupervisorPayrollNotification, SupervisorSalary,UserSalary,UserPayrollManagement,UserPayrollNotification
  # Assuming these helper functions exist
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -1943,3 +1943,256 @@ def user_process_payroll(request):
         return Response({'success': False, 'message': f'Error sending email: {str(e)}'}, status=500)
 
     return Response({'success': True, 'payroll_id': payroll.id, 'pdf_path': pdf_path}, status=200)
+
+
+
+@api_view(['GET'])
+def user_payroll_history(request):
+    """
+    Fetch payroll history with optional filters.
+    Filters:
+        - user: filter by user_id
+        - month: filter by YYYY-MM format
+        - designation: filter by designation (Employee, Supervisor, Human Resources)
+    """
+    user_filter = request.query_params.get('user')
+    month_filter = request.query_params.get('month')
+    designation_filter = request.query_params.get('designation')
+
+    payrolls = UserPayrollManagement.objects.select_related("user").all()
+
+    if user_filter:
+        payrolls = payrolls.filter(user__user_id=user_filter)
+
+    if month_filter:
+        payrolls = payrolls.filter(
+            month__year=month_filter[:4],
+            month__month=month_filter[5:7]
+        )
+
+    if designation_filter:
+        payrolls = payrolls.filter(user__designation=designation_filter)
+
+    data = [
+        {
+            "id": payroll.id,
+            "user_id": payroll.user.user_id,
+            "user_name": payroll.user.user_name,
+            "designation": payroll.user.designation,
+            "month": payroll.month.strftime("%Y-%m"),
+            "net_salary": payroll.net_salary,
+            "base_salary": payroll.base_salary,
+            "total_working_hours": payroll.total_working_hours,
+            "overtime_hours": payroll.overtime_hours,
+            "overtime_pay": payroll.overtime_pay,
+            "pdf_path": payroll.pdf_path,
+        }
+        for payroll in payrolls
+    ]
+
+    return Response(data)
+
+
+@api_view(['POST'])
+def create_user_salary(request):
+    """
+    Create a salary record for a user.
+    Required:
+        - user_id
+        - annual_salary
+        - effective_date (YYYY-MM)
+    Optional:
+        - bonus (default = 0)
+    """
+    try:
+        # Extract request data
+        user_id = request.data.get('user_id')
+        annual_salary = request.data.get('annual_salary')
+        bonus = request.data.get('bonus', "0")
+        effective_date = request.data.get('effective_date')
+
+        # Validate required fields
+        if not all([user_id, annual_salary, effective_date]):
+            return Response(
+                {"detail": "Missing required fields: 'user_id', 'annual_salary', or 'effective_date'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if user exists
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Validate effective_date format (YYYY-MM)
+        try:
+            effective_date = datetime.strptime(effective_date, "%Y-%m").date()
+        except ValueError:
+            return Response(
+                {"detail": "Invalid date format. Use 'YYYY-MM'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Prevent duplicate salary records for the same user & month
+        if UserSalary.objects.filter(
+            user=user,
+            effective_date__year=effective_date.year,
+            effective_date__month=effective_date.month
+        ).exists():
+            return Response(
+                {"detail": "A salary record already exists for this user and effective date."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create salary record
+        salary = UserSalary.objects.create(
+            user=user,
+            annual_salary=annual_salary,
+            bonus=bonus,
+            effective_date=effective_date
+        )
+
+        # Serialize response
+        serializer = UserSalarySerializer(salary)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response(
+            {"detail": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+@api_view(['PUT'])
+def update_user_salary(request, id):
+    """
+    Update salary details for a specific salary record by ID.
+    """
+    try:
+        salary = UserSalary.objects.get(id=id)
+        data = request.data.copy()
+
+        # Handle effective_date validation (optional)
+        effective_date = data.get('effective_date')
+        if effective_date:
+            try:
+                # Convert YYYY-MM to YYYY-MM-01
+                if len(effective_date.split('-')) == 2:
+                    effective_date = f"{effective_date}-01"
+                effective_date = timezone.datetime.strptime(effective_date, "%Y-%m-%d").date()
+
+                if effective_date <= timezone.now().date():
+                    return Response(
+                        {"detail": "Effective date must be in the future."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                data['effective_date'] = effective_date
+            except ValueError:
+                return Response(
+                    {"detail": "Invalid date format. Use 'YYYY-MM' or 'YYYY-MM-DD'."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        serializer = UserSalarySerializer(salary, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"detail": "Salary record updated successfully.", "data": serializer.data},
+                status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    except UserSalary.DoesNotExist:
+        return Response(
+            {"detail": "Salary record not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['DELETE'])
+def delete_user_salary(request, id):
+    """
+    Delete a specific salary record by ID.
+    """
+    try:
+        salary = UserSalary.objects.get(id=id)
+        salary.delete()
+        return Response(
+            {"detail": "Salary record deleted successfully."},
+            status=status.HTTP_200_OK
+        )
+    except UserSalary.DoesNotExist:
+        return Response(
+            {"detail": "Salary record not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            {"detail": f"An error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+        
+@api_view(['GET'])
+def user_salary_history(request):
+    """
+    Retrieve salary history for all users.
+    """
+    try:
+        salaries = UserSalary.objects.all()
+
+        if not salaries.exists():
+            return Response(
+                {"detail": "No salary records found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = UserSalarySerializer(salaries, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {"detail": f"An unexpected error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        
+from payroll.serializers import UserPayrollManagementSerializer,UserPayrollNotificationSerializer
+
+@api_view(['GET'])
+def user_payroll_notification(request):
+    """
+    Retrieve payroll notifications and payroll details for all users.
+    """
+    try:
+        # Get the current user from session
+        user_id = request.session.get('user')
+        if not user_id:
+            return Response({"detail": "User not authenticated."}, status=401)
+
+        # Fetch all payroll records for the user
+        payrolls = UserPayrollManagement.objects.filter(user__id=user_id)
+        payroll_data = UserPayrollManagementSerializer(payrolls, many=True).data
+
+        # Fetch all notifications for the user
+        notifications = UserPayrollNotification.objects.filter(user__id=user_id)
+        notification_data = UserPayrollNotificationSerializer(notifications, many=True).data
+
+        # Return unified response
+        return Response({
+            "payrolls": payroll_data,
+            "notifications": notification_data
+        }, status=200)
+
+    except Exception as e:
+        return Response(
+            {"detail": f"An unexpected error occurred: {str(e)}"},
+            status=500
+        )
