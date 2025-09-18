@@ -301,7 +301,6 @@ class UserSalary(models.Model):
     
 class UserPayrollManagement(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="payrolls")
-    user_id = models.CharField(max_length=20)
     month = models.DateField()
     email = models.EmailField(blank=True)
     base_salary = models.DecimalField(max_digits=12, decimal_places=2)
