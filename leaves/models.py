@@ -4,6 +4,7 @@ from datetime import timedelta
 from authentication.models import Ar, Employee, Hr, Manager,User
 
 
+
 class LeaveRequest(models.Model):
     LEAVE_TYPE_CHOICES = [
         ('medical', 'Medical'),
@@ -499,3 +500,58 @@ class EmployeeLateLoginReason(models.Model):
             self.employee_name = self.employee.employee_name
         super().save(*args, **kwargs)
 
+
+############################################################# New Changes #############################################################
+class UserLeaveRequest(models.Model):
+    LEAVE_TYPE_CHOICES = [
+        ('medical', 'Medical'),
+        ('vacation', 'Vacation'),
+        ('personal', 'Personal'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+    leave_type = models.CharField(max_length=10, choices=LEAVE_TYPE_CHOICES)
+    reason = models.TextField()
+    leave_proof = models.FileField(upload_to='media/leave_proof/', blank=True, null=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True, related_name='user_leave_requests')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    email = models.EmailField()
+    notification_sent = models.BooleanField(default=False)
+    calendar_link = models.URLField(blank=True, null=True)
+    is_auto_leave = models.BooleanField(default=False, help_text="Indicates if the leave was auto-applied due to no check-in.")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.leave_type} from {self.start_date} to {self.end_date}"
+
+    @property
+    def total_days(self):
+        total_days = (self.end_date - self.start_date).days + 1
+        sundays = sum(
+            1 for i in range(total_days)
+            if (self.start_date + timedelta(days=i)).weekday() == 6
+        )
+        return total_days - sundays
+    
+    
+class UserLateLoginReason(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_late_login_reasons')
+    leave_request = models.ForeignKey(UserLeaveRequest, on_delete=models.SET_NULL, blank=True, null=True, related_name='user_late_login_reasons')
+    date = models.DateField()
+    reason = models.TextField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Late login - {self.user.username} on {self.date}"

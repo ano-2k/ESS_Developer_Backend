@@ -198,3 +198,40 @@ class EmployeeLateLoginReasonSerializer(serializers.ModelSerializer):
         model = EmployeeLateLoginReason
         fields = ['id', 'employee', 'employee_id', 'employee_name', 'leave_request', 'date', 'reason', 'status', 'created_at']
 
+
+
+
+############################################## New Changes #################################################
+
+
+from .models import UserLeaveRequest, UserLateLoginReason
+
+
+class UserLeaveRequestSerializer(serializers.ModelSerializer):
+    total_days = serializers.ReadOnlyField()
+
+    class Meta:
+        model = UserLeaveRequest
+        fields = '__all__'
+
+
+class UserLateLoginReasonSerializer(serializers.ModelSerializer):
+    user_id = serializers.CharField(source='user.id', read_only=True)
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    leave_request = UserLeaveRequestSerializer(read_only=True)  # Nested info
+    date = serializers.DateField(format="%Y-%m-%d")
+    status = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = UserLateLoginReason
+        fields = [
+            'id',
+            'user',
+            'user_id',
+            'user_name',
+            'leave_request',
+            'date',
+            'reason',
+            'status',
+            'created_at'
+        ]

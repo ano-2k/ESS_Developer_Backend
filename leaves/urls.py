@@ -127,5 +127,6 @@ urlpatterns = [
     path('user/update-leave-balance/<str:username>/', views.update_user_leave_balance, name='update_user_leave_balance'),
     path('user/edit_user_leave_balance/<int:id>/', views.edit_user_leave_balance, name='edit_user_leave_balance'),
     path('user/delete_user_leave_balance/<int:id>/', views.delete_user_leave_balance, name='delete_user_leave_balance'),
+    path('submit_user_late_login_reason/', views.submit_user_late_login_reason, name='submit-user-late-login-reason'),
     
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

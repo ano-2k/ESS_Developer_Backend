@@ -4631,3 +4631,110 @@ def delete_user_leave_balance(request, id):
         return Response({'error': f'Leave balance not found for ID {id}.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+from .models import UserLeaveRequest, UserLateLoginReason
+from .serializers import UserLateLoginReasonSerializer, UserLeaveRequestSerializer
+
+logger = logging.getLogger(__name__)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_user_late_login_reason(request):
+    """
+    Unified API endpoint to submit a late login reason for a User auto-leave request.
+    Works for Employee, Supervisor, and HR (based on User.designation).
+    """
+    try:
+        with transaction.atomic():
+            serializer = UserLateLoginReasonSerializer(data=request.data)
+            if not serializer.is_valid():
+                logger.warning(f"Invalid input: {serializer.errors}")
+                return Response(
+                    {'error': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            leave_id = serializer.validated_data['leave_id']
+            reason_text = serializer.validated_data['reason'].strip()
+
+            leave_request = get_object_or_404(UserLeaveRequest, id=leave_id)
+
+            # Check auto-leave condition
+            if not (leave_request.is_auto_leave or leave_request.reason == "Auto Leave: Late or No Login"):
+                return Response(
+                    {'error': 'This leave request is not an auto-leave.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            user = leave_request.user
+            if not user:
+                return Response(
+                    {'error': 'No user associated with this leave request.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Ensure only one reason per leave
+            if UserLateLoginReason.objects.filter(leave_request=leave_request).exists():
+                return Response(
+                    {'error': 'A reason has already been submitted for this leave.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Must be submitted same day
+            today = timezone.localdate()
+            if today > leave_request.start_date:
+                return Response(
+                    {'error': 'Late login reasons can only be submitted on the same day.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Must be within shift hours
+            shift = getattr(user, 'shift', None)
+            if not shift:
+                return Response(
+                    {'error': f'No shift assigned to this {user.designation}.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            shift_start_datetime = timezone.make_aware(
+                timezone.datetime.combine(leave_request.start_date, shift.shift_start_time),
+                timezone.get_current_timezone()
+            )
+            shift_end_datetime = timezone.make_aware(
+                timezone.datetime.combine(leave_request.start_date, shift.shift_end_time),
+                timezone.get_current_timezone()
+            )
+            if shift_end_datetime < shift_start_datetime:  # Night shift handling
+                shift_end_datetime += timezone.timedelta(days=1)
+
+            now = timezone.now()
+            if not (shift_start_datetime <= now <= shift_end_datetime):
+                return Response(
+                    {'error': 'Late login reasons can only be submitted during shift hours.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Save late login reason
+            UserLateLoginReason.objects.create(
+                user=user,
+                leave_request=leave_request,
+                date=leave_request.start_date,
+                reason=reason_text,
+                status='pending'
+            )
+
+            leave_serializer = UserLeaveRequestSerializer(leave_request)
+            return Response({
+                'message': f'Late login reason submitted successfully by {user.designation}.',
+                'data': leave_serializer.data
+            }, status=status.HTTP_200_OK)
+
+    except UserLeaveRequest.DoesNotExist:
+        return Response({'error': 'No leave request found with this ID.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error in submit_user_late_login_reason: {str(e)}", exc_info=True)
+        return Response({'error': 'An internal server error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
