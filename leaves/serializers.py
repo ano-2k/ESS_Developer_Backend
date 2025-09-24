@@ -204,7 +204,7 @@ class EmployeeLateLoginReasonSerializer(serializers.ModelSerializer):
 ############################################## New Changes #################################################
 
 
-from .models import UserLeaveRequest, UserLateLoginReason
+from .models import UserLeaveRequest, UserLateLoginReason,UserApplyNotification,UserLeaveBalance,UserNotification
 
 
 class UserLeaveRequestSerializer(serializers.ModelSerializer):
@@ -235,3 +235,21 @@ class UserLateLoginReasonSerializer(serializers.ModelSerializer):
             'status',
             'created_at'
         ]
+        
+
+class UserLeaveBalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserLeaveBalance
+        fields = '__all__'
+
+
+class UserNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNotification
+        fields = '__all__'
+
+
+class UserApplyNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserApplyNotification
+        fields = '__all__'

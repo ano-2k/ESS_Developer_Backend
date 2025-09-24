@@ -555,3 +555,45 @@ class UserLateLoginReason(models.Model):
 
     def __str__(self):
         return f"Late login - {self.user.username} on {self.date}"
+
+
+class UserLeaveBalance(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='user_leave_balance')
+    medical_leave = models.PositiveIntegerField(default=0)
+    vacation_leave = models.PositiveIntegerField(default=0)
+    personal_leave = models.PositiveIntegerField(default=0)
+    total_leave_days = models.PositiveIntegerField(default=0)
+    total_absent_days = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.user.user_name} - Balance: {self.total_leave_days} days, Absent: {self.total_absent_days} days"
+
+    def update_total_absent_days(self, days):
+        self.total_absent_days += days
+        self.save()
+
+    def recalculate_total_leave_days(self):
+        self.total_leave_days = (
+            self.medical_leave + self.vacation_leave + self.personal_leave
+        )
+        self.save()
+        
+
+class UserNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    date = models.DateField()
+    time = models.TimeField()
+    message = models.TextField(max_length=300)
+
+    def __str__(self):
+        return f"Notification for {self.user.user_name} on {self.date} at {self.time}"
+
+
+class UserApplyNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="apply_notifications")
+    date = models.DateField()
+    time = models.TimeField()
+    message = models.TextField(max_length=300)
+
+    def __str__(self):
+        return f"Apply Notification for {self.user.user_name} on {self.date} at {self.time}"

@@ -5,10 +5,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from datetime import datetime, timedelta
-from .models import ArApplyNotification, ArLeaveBalance, ArLeaveRequest, ArNotification, HrApplyNotification, HrLeaveBalance, HrLeaveRequest, HrNotification, LeaveRequest, LeaveBalance, Notification, ApplyNotification
+from .models import ArApplyNotification, ArLeaveBalance, ArLeaveRequest, ArNotification, HrApplyNotification, HrLeaveBalance, HrLeaveRequest, HrNotification, LeaveRequest, LeaveBalance, Notification, ApplyNotification,UserApplyNotification,UserLateLoginReason,UserLeaveBalance,UserNotification,UserLeaveRequest
 from authentication.models import Ar, Employee, Hr,User
 from django.shortcuts import get_list_or_404
-from .serializers import ArLeaveRequestSerializer, HrLeaveRequestSerializer, LeaveRequestSerializer, LeaveBalanceSerializer, ManagerLeaveRequestSerializer, ManagerLeaveBalanceSerializer, SupervisorLeaveRequestSerializer
+from .serializers import ArLeaveRequestSerializer, HrLeaveRequestSerializer, LeaveRequestSerializer, LeaveBalanceSerializer, ManagerLeaveRequestSerializer, ManagerLeaveBalanceSerializer, SupervisorLeaveRequestSerializer,UserApplyNotificationSerializer,UserLateLoginReasonSerializer,UserNotificationSerializer,UserLeaveBalanceSerializer,UserLeaveRequestSerializer
 
 # for employee 
 
@@ -4446,58 +4446,32 @@ def edit_employee_leave_request(request, leave_id):
         
 
 ############################### New Flow Changes ##################################################
+
 @api_view(['PUT'])
 def update_user_leave_balance(request, username):
     try:
-        user = User.objects.get(username=username)
+        user = get_object_or_404(User, username=username)
         data = request.data
 
-        if user.designation == "Employee":
-            leave_balance, created = LeaveBalance.objects.get_or_create(
-                user=user,
-                defaults={
-                    'medical_leave': 0,
-                    'vacation_leave': 0,
-                    'personal_leave': 0,
-                    'total_leave_days': 0,
-                }
-            )
-
-        elif user.designation == "Supervisor":
-            leave_balance, created = SupervisorLeaveBalance.objects.get_or_create(
-                user=user,
-                defaults={
-                    'medical_leave': 0,
-                    'vacation_leave': 0,
-                    'personal_leave': 0,
-                    'total_leave_days': 0,
-                }
-            )
-
-        elif user.designation == "Human Resources":
-            leave_balance, created = HrLeaveBalance.objects.get_or_create(
-                user=user,
-                defaults={
-                    'medical_leave': 0,
-                    'vacation_leave': 0,
-                    'personal_leave': 0,
-                    'total_leave_days': 0,
-                }
-            )
-        else:
-            return Response({"error": "Invalid user designation."}, status=status.HTTP_400_BAD_REQUEST)
+        leave_balance, created = UserLeaveBalance.objects.get_or_create(
+            user=user,
+            defaults={
+                'medical_leave': 0,
+                'vacation_leave': 0,
+                'personal_leave': 0,
+                'total_leave_days': 0,
+                'total_absent_days': 0,
+            }
+        )
 
         # Update fields only if present in request data
         leave_balance.medical_leave = data.get("medical_leave", leave_balance.medical_leave)
         leave_balance.vacation_leave = data.get("vacation_leave", leave_balance.vacation_leave)
         leave_balance.personal_leave = data.get("personal_leave", leave_balance.personal_leave)
 
-        leave_balance.save()
+        leave_balance.recalculate_total_leave_days()
 
         return Response({"success": "Leave balance updated successfully."}, status=status.HTTP_200_OK)
-
-    except User.DoesNotExist:
-        return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
     except Exception as e:
         return Response({"error": f"Error updating leave balance: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -4511,55 +4485,21 @@ def user_leave_policies(request):
 
         for user in users:
             try:
-                # For Employees
-                if user.designation == "Employee":
-                    leave_balance = LeaveBalance.objects.get(user=user)
-                    leave_data.append({
-                        'id': leave_balance.id,
-                        'user': user.user_name,
-                        'department': user.department.department_name,
-                        'role': user.designation,
-                        'leave_balance': {
-                            'medical_leave': leave_balance.medical_leave,
-                            'vacation_leave': leave_balance.vacation_leave,
-                            'personal_leave': leave_balance.personal_leave,
-                            'total_leave_days': leave_balance.total_leave_days
-                        }
-                    })
-
-                # For Supervisors
-                elif user.designation == "Supervisor":
-                    leave_balance = SupervisorLeaveBalance.objects.get(user=user)
-                    leave_data.append({
-                        'id': leave_balance.id,
-                        'user': user.user_name,
-                        'department': user.department.department_name,
-                        'role': user.designation,
-                        'leave_balance': {
-                            'medical_leave': leave_balance.medical_leave,
-                            'vacation_leave': leave_balance.vacation_leave,
-                            'personal_leave': leave_balance.personal_leave,
-                            'total_leave_days': leave_balance.total_leave_days
-                        }
-                    })
-
-                # For HR
-                elif user.designation == "Human Resources":
-                    leave_balance = HrLeaveBalance.objects.get(user=user)
-                    leave_data.append({
-                        'id': leave_balance.id,
-                        'user': user.user_name,
-                        'department': user.department.department_name,
-                        'role': user.designation,
-                        'leave_balance': {
-                            'medical_leave': leave_balance.medical_leave,
-                            'vacation_leave': leave_balance.vacation_leave,
-                            'personal_leave': leave_balance.personal_leave,
-                            'total_leave_days': leave_balance.total_leave_days
-                        }
-                    })
-
-            except (LeaveBalance.DoesNotExist, SupervisorLeaveBalance.DoesNotExist, HrLeaveBalance.DoesNotExist):
+                leave_balance = user.leave_balance  # one-to-one relation
+                leave_data.append({
+                    'id': leave_balance.id,
+                    'user': user.user_name,
+                    'department': user.department.department_name if user.department else None,
+                    'role': user.designation,
+                    'leave_balance': {
+                        'medical_leave': leave_balance.medical_leave,
+                        'vacation_leave': leave_balance.vacation_leave,
+                        'personal_leave': leave_balance.personal_leave,
+                        'total_leave_days': leave_balance.total_leave_days,
+                        'total_absent_days': leave_balance.total_absent_days
+                    }
+                })
+            except UserLeaveBalance.DoesNotExist:
                 continue
 
         return Response(leave_data, status=status.HTTP_200_OK)
@@ -4567,76 +4507,43 @@ def user_leave_policies(request):
     except Exception as e:
         return Response({'error': f'Error fetching leave policies: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 @api_view(['PUT'])
 def edit_user_leave_balance(request, id):
     try:
-        leave_balance = None
-        # Try to find leave balance by ID in each table
-        try:
-            leave_balance = LeaveBalance.objects.get(id=id)
-        except LeaveBalance.DoesNotExist:
-            try:
-                leave_balance = SupervisorLeaveBalance.objects.get(id=id)
-            except SupervisorLeaveBalance.DoesNotExist:
-                leave_balance = HrLeaveBalance.objects.get(id=id)
-
-        user = leave_balance.user
-        designation = user.designation
+        leave_balance = get_object_or_404(UserLeaveBalance, id=id)
 
         # Update fields from request data or keep existing values
-        medical_leave = request.data.get('medical_leave', leave_balance.medical_leave)
-        vacation_leave = request.data.get('vacation_leave', leave_balance.vacation_leave)
-        personal_leave = request.data.get('personal_leave', leave_balance.personal_leave)
-
-        # Convert to int safely
         try:
-            leave_balance.medical_leave = int(medical_leave)
-            leave_balance.vacation_leave = int(vacation_leave)
-            leave_balance.personal_leave = int(personal_leave)
+            leave_balance.medical_leave = int(request.data.get('medical_leave', leave_balance.medical_leave))
+            leave_balance.vacation_leave = int(request.data.get('vacation_leave', leave_balance.vacation_leave))
+            leave_balance.personal_leave = int(request.data.get('personal_leave', leave_balance.personal_leave))
         except ValueError:
             return Response({'error': 'Leave values must be integers.'}, status=status.HTTP_400_BAD_REQUEST)
 
         leave_balance.recalculate_total_leave_days()
-        leave_balance.save()
 
-        return Response({'message': f'Leave balance for user {user.username} updated successfully.'}, status=status.HTTP_200_OK)
+        return Response({'message': f'Leave balance for user {leave_balance.user.username} updated successfully.'}, status=status.HTTP_200_OK)
 
-    except (LeaveBalance.DoesNotExist, SupervisorLeaveBalance.DoesNotExist, HrLeaveBalance.DoesNotExist):
-        return Response({'error': f'Leave balance not found for ID {id}.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['DELETE'])
 def delete_user_leave_balance(request, id):
     try:
-        leave_balance = None
-
-        # Find leave balance by ID in all tables
-        try:
-            leave_balance = LeaveBalance.objects.get(id=id)
-        except LeaveBalance.DoesNotExist:
-            try:
-                leave_balance = SupervisorLeaveBalance.objects.get(id=id)
-            except SupervisorLeaveBalance.DoesNotExist:
-                leave_balance = HrLeaveBalance.objects.get(id=id)
-
+        leave_balance = get_object_or_404(UserLeaveBalance, id=id)
         designation = leave_balance.user.designation
         leave_balance.delete()
 
         return Response({"detail": f"{designation} leave balance deleted successfully."}, status=status.HTTP_200_OK)
 
-    except (LeaveBalance.DoesNotExist, SupervisorLeaveBalance.DoesNotExist, HrLeaveBalance.DoesNotExist):
-        return Response({'error': f'Leave balance not found for ID {id}.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
 
 
-
-
-from .models import UserLeaveRequest, UserLateLoginReason
-from .serializers import UserLateLoginReasonSerializer, UserLeaveRequestSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -4738,3 +4645,223 @@ def submit_user_late_login_reason(request):
     except Exception as e:
         logger.error(f"Error in submit_user_late_login_reason: {str(e)}", exc_info=True)
         return Response({'error': 'An internal server error occurred.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    
+@api_view(['POST', 'GET'])
+def user_leave_status(request):
+    if request.method == 'POST':
+        leave_id = request.data.get('leave_id')
+        status_update = request.data.get('status')
+
+        if status_update not in ['approved', 'rejected']:
+            return Response({'error': 'Invalid status.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            leave_request = UserLeaveRequest.objects.get(id=leave_id)
+        except UserLeaveRequest.DoesNotExist:
+            return Response({'error': 'Leave request not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if leave_request.status == status_update:
+            return Response({'message': f'Leave request is already {status_update}.'}, status=status.HTTP_200_OK)
+
+        leave_days_used = 0
+        if status_update == 'approved':
+            total_days = (leave_request.end_date - leave_request.start_date).days + 1
+            sundays = sum(
+                1 for i in range(total_days)
+                if (leave_request.start_date + timedelta(days=i)).weekday() == 6
+            )
+            leave_days_used = total_days - sundays
+
+            # Fetch or create leave balance
+            leave_balance, _ = UserLeaveBalance.objects.get_or_create(user=leave_request.user)
+
+            # Deduct leave balance
+            if leave_request.leave_type == 'medical':
+                if leave_balance.medical_leave < leave_days_used:
+                    return Response({'error': 'Insufficient medical leave balance.'}, status=status.HTTP_400_BAD_REQUEST)
+                leave_balance.medical_leave -= leave_days_used
+            elif leave_request.leave_type == 'vacation':
+                if leave_balance.vacation_leave < leave_days_used:
+                    return Response({'error': 'Insufficient vacation leave balance.'}, status=status.HTTP_400_BAD_REQUEST)
+                leave_balance.vacation_leave -= leave_days_used
+            elif leave_request.leave_type == 'personal':
+                if leave_balance.personal_leave < leave_days_used:
+                    return Response({'error': 'Insufficient personal leave balance.'}, status=status.HTTP_400_BAD_REQUEST)
+                leave_balance.personal_leave -= leave_days_used
+
+            leave_balance.recalculate_total_leave_days()
+            leave_balance.save()
+
+        # Update leave request
+        leave_request.status = status_update
+        leave_request.save()
+
+        # Create notifications
+        UserNotification.objects.create(
+            user=leave_request.user,
+            date=timezone.now().date(),
+            time=timezone.localtime(timezone.now()).time(),
+            message=f"Your leave request for {leave_request.leave_type} from {leave_request.start_date} to {leave_request.end_date} has been {status_update}."
+        )
+
+        return Response({'message': f'Leave request has been {status_update}.'}, status=status.HTTP_200_OK)
+
+    elif request.method == 'GET':
+        search_user_id = request.query_params.get('search_user_id', '')
+        email = request.query_params.get('email', '')
+        search_status = request.query_params.get('search_status', '')
+        search_leave_type = request.query_params.get('search_leave_type', '')
+        from_date = request.query_params.get('from_date', '')
+        to_date = request.query_params.get('to_date', '')
+
+        leave_requests = UserLeaveRequest.objects.all()
+        if search_user_id:
+            leave_requests = leave_requests.filter(user_id=search_user_id)
+        if search_status:
+            leave_requests = leave_requests.filter(status=search_status)
+        if search_leave_type:
+            leave_requests = leave_requests.filter(leave_type=search_leave_type)
+        if email:
+            leave_requests = leave_requests.filter(email=email)
+        if from_date:
+            leave_requests = leave_requests.filter(start_date__gte=from_date)
+        if to_date:
+            leave_requests = leave_requests.filter(end_date__lte=to_date)
+
+        serializer = UserLeaveRequestSerializer(leave_requests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+@api_view(['POST'])
+def user_apply_leave(request):
+    """
+    Unified API to apply leave for any user (Employee, Supervisor, HR).
+    """
+    try:
+        # Extract request data
+        start_date = request.data.get('start_date')
+        end_date = request.data.get('end_date')
+        leave_type = request.data.get('leave_type')
+        reason = request.data.get('reason')
+        leave_proof = request.FILES.get('leave_proof')
+        user_id = request.data.get('user_id')
+
+        # Validate required fields
+        if not (start_date and end_date and leave_type and user_id):
+            return Response({'error': 'Missing required fields.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate leave type
+        valid_leave_types = ['medical', 'vacation', 'personal']
+        if leave_type not in valid_leave_types:
+            return Response({'error': 'Invalid leave type.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fetch user
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Parse date strings
+        start_date_obj = timezone.datetime.fromisoformat(start_date.replace('Z', '+00:00')).date()
+        end_date_obj = timezone.datetime.fromisoformat(end_date.replace('Z', '+00:00')).date()
+
+        if start_date_obj > end_date_obj:
+            return Response({'error': 'End date must be after start date.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculate total leave days (excluding Sundays)
+        total_days = (end_date_obj - start_date_obj).days + 1
+        sundays = sum(1 for i in range(total_days) if (start_date_obj + timedelta(days=i)).weekday() == 6)
+        leave_days_used = total_days - sundays
+
+        # Fetch or create leave balance
+        leave_balance, _ = UserLeaveBalance.objects.get_or_create(user=user)
+
+        # Check if balance is enough
+        if leave_type == 'medical' and leave_balance.medical_leave < leave_days_used:
+            return Response({'error': 'Insufficient medical leave balance.'}, status=status.HTTP_400_BAD_REQUEST)
+        elif leave_type == 'vacation' and leave_balance.vacation_leave < leave_days_used:
+            return Response({'error': 'Insufficient vacation leave balance.'}, status=status.HTTP_400_BAD_REQUEST)
+        elif leave_type == 'personal' and leave_balance.personal_leave < leave_days_used:
+            return Response({'error': 'Insufficient personal leave balance.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create leave request
+        leave_request = UserLeaveRequest.objects.create(
+            start_date=start_date_obj,
+            end_date=end_date_obj,
+            leave_type=leave_type,
+            reason=reason,
+            leave_proof=leave_proof,
+            user=user,
+            email=user.email,
+            status='pending'
+        )
+
+        # Notification
+        UserApplyNotification.objects.create(
+            user=user,
+            date=timezone.now().date(),
+            time=timezone.localtime(timezone.now()).time(),
+            message=f"{user.designation} requested {leave_type} leave from {start_date_obj} to {end_date_obj}"
+        )
+
+        return Response({
+            'message': 'Leave request submitted successfully!',
+            'leave_id': leave_request.id
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+@api_view(['GET'])
+def user_leave_history(request):
+    """
+    Fetch leave history with optional filters:
+    user_id, from_date, to_date, status
+    """
+    user_id = request.query_params.get('user_id')
+    from_date = request.query_params.get('from_date')
+    to_date = request.query_params.get('to_date')
+    status_filter = request.query_params.get('status')
+
+    filter_args = {}
+    if user_id:
+        filter_args['user__user_id'] = user_id
+    if from_date:
+        filter_args['start_date__gte'] = from_date
+    if to_date:
+        filter_args['end_date__lte'] = to_date
+    if status_filter:
+        filter_args['status'] = status_filter
+
+    leave_requests = UserLeaveRequest.objects.filter(**filter_args).order_by('-start_date')
+    serializer = UserLeaveRequestSerializer(leave_requests, many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+def user_leave_history_by_id(request, id):
+    """
+    Retrieve leave request history for a specific user ID.
+    """
+    try:
+        leave_requests = get_list_or_404(UserLeaveRequest, user__user_id=id)
+        serializer = UserLeaveRequestSerializer(leave_requests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+@api_view(['GET'])
+def user_leave_history_list(request):
+    """
+    Fetch all leave requests for all users.
+    """
+    try:
+        leave_requests = UserLeaveRequest.objects.all().order_by('-start_date')
+        serializer = UserLeaveRequestSerializer(leave_requests, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

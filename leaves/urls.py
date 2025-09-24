@@ -129,4 +129,10 @@ urlpatterns = [
     path('user/delete_user_leave_balance/<int:id>/', views.delete_user_leave_balance, name='delete_user_leave_balance'),
     path('submit_user_late_login_reason/', views.submit_user_late_login_reason, name='submit-user-late-login-reason'),
     
+    
+    path('user-leave-status/', views.user_leave_status, name='user-leave-status'),
+    path('api/user-apply-leave/', views.user_apply_leave, name='user_apply_leave'),
+    path('user_leave-history/', views.user_leave_history, name='user_leave_history'),
+    path('user-leave-history-id/<str:id>/', views.user_leave_history_by_id, name='user_leave_history_by_id'),
+    path('user-leave-history-list/', views.user_leave_history_list, name='user_leave_history_list'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
